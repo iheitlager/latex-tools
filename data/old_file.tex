@@ -1,0 +1,801 @@
+%  LaTeX support: latex@mdpi.com 
+%  For support, please attach all files needed for compiling as well as the log file, and specify your operating system, LaTeX version, and LaTeX editor.
+
+%=================================================================
+% Full title of the paper (Capitalized), Abstract and Keywords
+\def\mytitle{Navigating Digital Innovation in Asset-Intensive Industries: A Process Model Informed by Design Science}
+\def\myabstract{Companies in asset-intensive industries, such as aviation and railways, face unique digital transformation challenges due to the misalignment between the rapid evolution of digital technologies and decades-long asset lifecycles. Existing innovation frameworks are inadequate for managing this complexity, which in turn creates tensions between innovation requirements and operational reliability demands. This paper therefore investigates how asset-intensive companies can systematically integrate digital innovations, while fully complying with regulatory constraints and safety requirements. We employ a design science approach in a study of Nederlandse Spoorwegen (NS), the Dutch national railway operator, focusing specifically on the implementation of AI-driven CCTV systems within the operations of NS. Drawing on a literature review and participant-observer as well as interview data, we develop six design propositions that address the key digital innovation challenges of asset-intensive companies in the area of market readiness assessment, modular architecture, regulatory compliance, temporal coordination, ecosystem governance, and organizational capability development. Using these design propositions, we develop the Iterative Development \& Adoption Model (IDAM) that operationalizes market maturity assessment through market readiness levels to guide make-or-buy transitions across four iterative phases: ideate, assess, realise, and review. This model includes a Development Reference Architecture for emerging technologies and an Integration Reference Architecture for more mature technologies, enabling concurrent sourcing strategies based on technological maturity. IDAM provides actionable guidance for decisions about technology adoption in asset-intensive contexts, thereby offering a systematic approach to innovation management in industries with very long asset lifecycles and huge regulatory constraints.}
+\def\mykeywords{design science; engineering design; technology adoption; digital transformation; product development; asset lifecycle; modular architecture; market readiness; operational reliability}
+
+
+%=================================================================
+\documentclass[preprints,article,submit,pdftex,moreauthors]{Definitions/mdpi} 
+%\documentclass[preprints,article,submit,pdftex,moreauthors]{Definitions/mdpi} 
+% For posting an early version of this manuscript as a preprint, you may use "preprints" as the journal. Changing "submit" to "accept" before posting will remove line numbers.
+
+%--------------------
+% Class Options:
+%--------------------
+%----------
+% journal
+%----------
+% Choose between the following MDPI journals:
+% designs
+
+%---------
+% article
+%---------
+% The default type of manuscript is "article", but can be replaced by: 
+% supfile = supplementary materials
+
+%----------
+% submit
+%----------
+% The class option "submit" will be changed to "accept" by the Editorial Office when the paper is accepted. This will only make changes to the frontpage (e.g., the logo of the journal will get visible), the headings, and the copyright information. Also, line numbering will be removed. Journal info and pagination for accepted papers will also be assigned by the Editorial Office.
+
+%------------------
+% moreauthors
+%------------------
+% If there is only one author the class option oneauthor should be used. Otherwise use the class option moreauthors.
+
+%---------
+% pdftex
+%---------
+% The option pdftex is for use with pdfLaTeX. Remove "pdftex" for (1) compiling with LaTeX & dvi2pdf (if eps figures are used) or for (2) compiling with XeLaTeX.
+
+%=================================================================
+% MDPI internal commands - do not modify
+\firstpage{1} 
+\makeatletter 
+\setcounter{page}{\@firstpage} 
+\makeatother
+\pubvolume{1}
+\issuenum{1}
+\articlenumber{0}
+\pubyear{2025}
+\copyrightyear{2025}
+%\externaleditor{Firstname Lastname} % More than 1 editor, please add `` and '' before the last editor name
+\datereceived{ } 
+\daterevised{ } % Comment out if no revised date
+\dateaccepted{ } 
+\datepublished{ } 
+%\datecorrected{} % For corrected papers: "Corrected: XXX" date in the original paper.
+%\dateretracted{} % For retracted papers: "Retracted: XXX" date in the original paper.
+\hreflink{https://doi.org/} % If needed use \linebreak
+%\doinum{}
+%\pdfoutput=1 % Uncommented for upload to arXiv.org
+%\CorrStatement{yes}  % For updates
+%\longauthorlist{yes} % For many authors that exceed the left citation part
+
+%=================================================================
+% Add packages and commands here. The following packages are loaded in our class file: fontenc, inputenc, calc, indentfirst, fancyhdr, graphicx, epstopdf, lastpage, ifthen, float, amsmath, amssymb, lineno, setspace, enumitem, mathpazo, booktabs, titlesec, etoolbox, tabto, xcolor, colortbl, soul, multirow, microtype, tikz, totcount, changepage, attrib, upgreek, array, tabularx, pbox, ragged2e, tocloft, marginnote, marginfix, enotez, amsthm, natbib, hyperref, cleveref, scrextend, url, geometry, newfloat, caption, draftwatermark, seqsplit
+% cleveref: load \crefname definitions after \begin{document}
+
+%=================================================================
+% Please use the following mathematics environments: Theorem, Lemma, Corollary, Proposition, Characterization, Property, Problem, Example, ExamplesandDefinitions, Hypothesis, Remark, Definition, Notation, Assumption
+%% For proofs, please use the proof environment (the amsthm package is loaded by the MDPI class).
+
+%=================================================================
+% Full title of the paper (Capitalized)
+\Title{\mytitle}
+
+% MDPI internal command: Title for citation in the left column
+\TitleCitation{\mytitle}
+
+% Author Orchid ID: enter ID or remove command
+\newcommand{\orcidauthorA}{0000-0002-6589-3730} % Add \orcidA{} behind the author's name
+%\newcommand{\orcidauthorB}{0000-0002-3997-1192} % Add \orcidB{} behind the author's name
+
+% Authors, for the paper (add full first names)
+\Author{Ilja Heitlager $^{1,}$*\orcidA{}, Bernard Jenniskens $^{2}$ and A. Georges L. Romme $^{3}$\orcidB{}}
+
+%\longauthorlist{yes}
+
+% MDPI internal command: Authors, for metadata in PDF
+\AuthorNames{Ilja Heitlager, Bernard Jenniskens and A. Georges L. Romme}
+\AuthorCitation{Heitlager, I.; Jenniskens, B.; Romme, A.G.L.}
+
+% Affiliations / Addresses (Add [1] after \address if there is only one affiliation.)
+\address{%
+$^{1}$ \quad Schuberg Philis, Eindhoven University of Technology; i.heitlager@tue.nl\\
+$^{2}$ \quad Schuberg Philis; bjenniskens@schubergphilis.com\\
+$^{3}$ \quad Eindhoven University of Technology; a.g.l.romme@tue.nl}
+
+% Contact information of the corresponding author
+\corres{Correspondence: i.heitlager@tue.nl}
+
+% Current address and/or shared authorship
+%\firstnote{Current address: Affiliation.}  
+% Current address should not be the same as any items in the Affiliation section.
+
+%\secondnote{These authors contributed equally to this work.}
+% The commands \thirdnote{} till \eighthnote{} are available for further notes.
+
+%\simplesumm{} % Simple summary
+
+%\conference{} % An extended version of a conference paper
+
+% Abstract (Do not insert blank lines, i.e. \\) 
+\abstract{\myabstract}
+
+% Keywords
+\keyword{\mykeywords} 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{document}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Begin included file: introduction.tex
+\section{Introduction}
+Asset-intensive industries, such as aviation and railway, face the fundamental challenge of temporally aligning rapid digital innovation cycles to decades-long physical asset lifecycles \cite{Buck2023, Hoessler2024}. Asset-intensive companies draw on expensive equipment with extended lifespans and traditionally rely on internal development strategies to fulfill their specialized technological requirements \citep{Chiaroni2010, Troilo2017}. Digital transformation creates a temporal coordination challenge that cannot be addressed by existing theories and tools (e.g., for technology sourcing) \citep{Rousseau2016, Rietveld2016}, as they assume a substantial level of organizational flexibility that does not exist for capital-intensive physical assets that must comply with strict regulatory requirements \citep{Berman2012, Vial2019, Warner2019}.
+
+Asset-intensive companies therefore face \textit{temporal misalignment} tensions in their digital transformation efforts. These companies have to modernize their technological capabilities to remain competitive and meet evolving customer expectations \citep{Hoessler2024}, while operating under significant constraints arising from massive (past) capital investments, stringent regulatory requirements, and safety-critical operations. These constraints limit their ability to adopt experimental approaches typically associated with digital innovation \citep{GarciaMartin2024}. Moreover, asset-intensive companies have unique architectures \citep{Jacobides2016} involving complex supply chains, long-term contracts, and specialized knowledge \citep{Chiaroni2010, Nambisan2018}. 
+
+Railway operators exemplify these challenges in temporal alignment. That is, railway operators have to integrate advanced technologies such as artificial intelligence (AI) and Internet of Things (IoT) in their operations to meet the growing needs and expectations of their customers. But this must be done within the decades-long operational life of trains as well as strict safety standards \citep{Li2023, Sarp2024}. Accordingly, the integration of digital technology by railway operators demands a careful temporal coordination effort across multiple factors, including legacy system compatibility, interoperability requirements, and continuous service maintenance throughout the digital transformation process \citep{Volpentesta2023}. This paper therefore focuses on the following research question: \textit{can we create a market-driven technology sourcing process for asset-intensive companies to effectively reduce their temporal misalignment between digital innovation cycles and extended asset lifecycles?}
+
+To address this question, we draw on a design science approach \citep{Romme2021} that serves to bridge the gap between theoretical concepts and practical applications by developing solutions informed by design propositions. This approach covers four distinct phases: exploration, synthesis, creation, and evaluation \citep{Dimov2023, Keskin2020}. The design propositions are defined in terms of the context, agency, mechanism, and outcome dimensions \citep{Romme2021, Denyer2008}. The main result of this study is the Iterative Development \&
+Adoption Model (IDAM), a process model for asset-intensive companies that need to temporally align their market-driven sourcing for digital technologies with very long asset life cycles. This model is grounded in a set of design propositions and offers a structured approach for sourcing digital technologies in asset-intensive industries.
+% End included file: introduction.tex
+
+
+% Begin included file: background.tex
+\section{Background}
+
+In this section, we explore how various theoretical perspectives address digital transformation in asset-intensive industries. First, \textit{dynamic capabilities} (DC) theory \citep{Eisenhardt2000, Helfat2007} provides a generic framework for understanding how organizations adapt to technological discontinuities: DC theory distinguishes between sensing, seizing, and reconfiguring capabilities \citep{Teece2007}. \citet{Warner2019} extend this framework specifically to digital transformation contexts, demonstrating how firms must develop new capabilities for opportunity recognition, resource allocation, and organizational adaptation. However, asset-intensive industries (e.g., semiconductors, aviation, railway) face unique dynamic capability challenges due to their temporal misalignment between capability development cycles and technological change rates. While software-driven companies can rapidly develop new capabilities, asset-intensive sectors must build capabilities that align with decades-long asset lifecycles. This creates an inherent conflict between the agility of digital technologies and the stability of operations in these industries \citep{Thomson2022}.
+
+Second, \textit{digital innovation} theory \citep{Yoo2012, Hoessler2024} explains how the convergence of physical products with digital capabilities creates new innovation challenges and opportunities. More specifically, studies of layered modular architectures suggest that digital innovations are characterized by device, network, service, and content layers; these layers evolve independently while maintaining systemic coherence \citep{Yoo2010} . \citet{Nambisan2017} therefore argue that digital innovation management requires new approaches, because traditional innovation frameworks assume stable product boundaries and clear innovation processes. Industry 4.0 frameworks \citep{Kagermann2013, Schwab2017} extend this convergence concept by emphasizing cyber-physical systems integration; physical and digital components interact in these systems through real-time data exchange and autonomous decision-making. In this respect, studies of cyber-physical systems explain how embedded computing and networking technologies transform physical systems into intelligent, adaptive entities \citep{Lee2008}. \citet{Demeter2021} illustrate how the digitalization of physical assets enables new forms of monitoring, optimization, and predictive maintenance. In asset-intensive industries, this convergence creates major tensions in the area of product architecture and innovation timing when rapidly evolving digital layers have to be integrated in a slowly changing physical infrastructure.
+
+Third, \textit{institutional} theory \citep{DiMaggio1983, Scott2014} explains how regulatory and other institutions shape organizational behavior and innovation patterns. In asset-intensive industries, regulatory institutions create strong constraints on innovation by means of safety and reliability requirements that prioritize proven technologies over experimental approaches. The rise of Industry 4.0 technologies adds a layer of institutional complexity, because existing regulatory frameworks are not (easily) applicable to cyber-physical systems that merge the conventional distinctions between the physical and digital realm \citep{Kagermann2013}. The concept of institutional entrepreneurship \cite{Battilana2009} thus becomes relevant for understanding how firms can navigate and potentially reshape institutional constraints when they engage in digital transformation. However, the path-dependent nature of institutional development \citep{Sydow2009} creates inertial forces that resist rapid technological change, especially in industries in which regulatory frameworks focus on established technologies and therefore do not effectively accommodate digital innovation.
+
+The fourth perspective outlined here is\textit{ industry architecture} theory \citep{Jacobides2016} that provides insight into how industries organize complex value creation processes and how firms make decisions about new technologies. The evolution from integrated to modular architectures \citep{Mikkola2003} enables new forms of collaborative innovation, but also creates coordination challenges in managing complex supplier ecosystems. In asset-intensive industries, architectural choices become particularly critical because investments in physical assets constrain future technological options, implying that make-or-buy decisions become more consequential than in industries with shorter asset lifecycles. Here, Parmigiani's \cite{Parmigiani2007} concept of concurrent sourcing—simultaneously making and buying similar components—is especially relevant when firms must balance internal capabilities with external digital expertise, while maintaining the operational control over their critical infrastructure.
+
+Finally, \textit{ambidexterity} theory \citep{March1991, OReilly2013} examines how a company balances two competing demands, that is, exploiting its existing capabilities while simultaneously exploring new opportunities. Asset-intensive industries face unique ambidexterity challenges in this regard. Exploitation in these industries involves decades-long commitments to physical assets. By contrast, exploration requires the flexibility to adapt to rapidly changing digital technologies \citep{Buck2023, Hoessler2024}. This creates an inherent tension between long-term asset investments and short-term technological adaptability.
+
+Overall, this overview suggests there is a major gap in the literature with regard to understanding and facilitating digital transformation within asset-intensive industries. DC theory assumes a substantial level of organizational flexibility, which may not exist when the company is constrained by huge investments in physical assets and the regulatory requirements associated with these assets. Digital innovation theory and Industry 4.0 frameworks address technological convergence, but tend to ignore the institutional and regulatory constraints prevailing in asset-intensive sectors. Industry architecture theory provides deep insights into strategic sourcing, but was developed primarily for manufacturing contexts in which modularity is more advanced. This theoretical gap in the literature can be called the problem of \textit{temporal misalignment} between digital innovation and very long asset lifecycles in industries such as aviation and railways. Airline and railway operators must integrate advanced digital technologies, such as artificial intelligence and Internet of Things systems, into aircrafts and trains with very long operational lifecycles, while also complying to strict regulations. 
+% End included file: background.tex
+
+
+% Begin included file: methodology.tex
+\section{Methodology: Design Science}
+
+This research applies a Design Science (DS) approach to connect theory to practical solutions in the railway sector \citep{Dimov2023}. DS combines problem-solving with explanatory science to create and test artifacts \citep{Denyer2008}; it bridges theory and practice by generating design knowledge and principles to solve complex real-world issues \citep{Peffers2018}. As argued by \citet{Mohrman2007}, the development of design capabilities is essential for bridging theory and practice, especially in complex organizational settings. This study tackles the temporal alignment problem of railway operators, outlined earlier.
+
+We adopted a DS approach consisting of four consecutive phases \citep{Keskin2020}: exploration, synthesis, creation, and evaluation, as shown in Figure \ref{fig:ds}. The DS cycle in this figure was combined with a process thinking perspective, to emphasize the temporal dimension of the problem and its potential solutions \citep{Langley2007}. Each phase of the DS cycle in Figure 1 is explained below.
+
+\begin{figure}[H]
+    \isPreprints{\centering}{} % Only used for preprints
+    \includegraphics[width=0.5\columnwidth]{figures/ds.png}
+    \caption{\textsf{Design Science Cycle (source: \citet{Keskin2020})}}
+    \label{fig:ds}
+\end{figure}
+
+\textbf{Exploration phase}. We first conducted a comprehensive literature review and semi-structured interviews with key stakeholders. This phase embodies Langley's~\cite{Langley2007} "tracing back" approach, to examine how railway operators currently deal with product and service innovations. This first phase thus serves to assess the practical significance of the temporal (mis)alignment problem, as a foundation for subsequent phases of the design cycle \citep{Romme2023}.
+
+\textbf{Synthesis phase}. In this phase, we applied Context-Agency-Mechanism-Outcome (CAMO) logic to define various design propositions that synthesize the extant body of knowledge in actionable design guidelines\citep{Romme2021} \citep{Denyer2008}. These design propositions are synthesized from both the literature reviewed and the practitioners interviewed in the previous phase. The synthesis phase thereby transforms "nouns to verbs" \citep{Langley2007}, by focusing on 'innovating' rather than innovation and 'strategizing' rather than strategy through the construction of mechanisms.
+
+\textbf{Creation phase}. In the subsequent phase, we created a process model to guide railway operators through digital innovation processes. The design propositions developed in the preceding phase informed the creation of this model and as such provides prescriptive knowledge applicable to digital innovation in asset-intensive industries.
+
+\textbf{Evaluation phase}. In this phase, we validated the model (created in previous phase) by examining its functionality, completeness, consistency, performance, usability, and organizational alignment. The external validity of the model was checked by means of additional discussions with the stakeholders (also interviewed in the exploration phase). The model's internal validity was examined by assessing its consistency with the design propositions. In line with the standards for DS research formulated by \citet{Peffers2018}, this assessment ensures that the resulting model (as the main artifact arising from the study) not only has practical utility and impact, but also has a strong theoretical foundation.
+
+\subsection*{Research Context}
+The research was conducted within Nederlandse Spoorwegen (NS)\footnote{https://www.ns.nl/en/about-ns}, the principal railway operator in the Netherlands. The NS operates about 800 trains distributed across 8 different categories (called 'series'), with a new Double Deck New Generation (DDNG) series being underway.\footnote{https://www.ns.nl/en/about-ns/trains-of-ns} For this study, we collaborated with the department of Train Digitalization of the NS. This department is structured into four distinct clusters: Software Development \& Platforms, Safety \& Security, Maintenance, and Transportation, with a strategic focus on developing digital technologies for the train fleet. More specifically, we focused on the Team Optic team that is responsible for the evaluation of AI-integrated CCTV systems on trains. AI-integrated CCTV systems provide a representative case of the digital transformation challenges faced by railway operators. As such, it was an ideal case for examining the complexities of integrating advanced digital technologies into safety-critical railway operations. 
+% End included file: methodology.tex
+
+
+% Begin included file: datacollection.tex
+\subsection*{Data Collection and Analysis}
+This study draws on qualitative data collection via participant-observations as well as interviews with key stakeholders \citep{Elkatawneh2016} in the railway industry. This combined approach enabled the development of rich contextual insights into professional experiences and practices in digital transformation in railway operations.
+
+The collection of participant-observer data \citep{Bartunek2007, Elkatawneh2016} serve to overcome the limitations of desk research, by directly observing operational environments and the practical use of technologies. The participant-observer data were collected during site visits, participatory sessions, and informal conversations, all documented in field notes. Table~\ref{tab:participant_observations} summarizes the participant-observer data in terms of dates, observation types, context, and key insights. An example of the latter is the key insight arising from the visit to the Central Surveillance Center, exposing the researchers to the complexity of managing around 800 trains of ten highly different types (with the oldest trains dating back to 1980, and the most recent ones produced in 2023). Each train type needs specific software for footage retrieval, which in turn leads to major inefficiencies during incidents. Security officers in the Central Surveillance Center therefore have to use a distinct program for each train type, and if remote access fails, they have to collect the data by going to the train themselves.
+
+
+% Begin included file: observer.tex
+\begin{table}[H]
+\isPreprints{\centering}{} % Only used for preprints
+\scriptsize
+\caption{Participant Observations and Field Research Activities}
+\begin{tabular}{p{0.13\textwidth}p{0.20\textwidth}p{0.20\textwidth}p{0.35\textwidth}}
+
+\textbf{Date} & \textbf{Type of Observation} & \textbf{Participants/Context} & \textbf{Key Insights Documented} \\
+
+\hline
+
+November 1,2023 & Technical System Evaluation & Test Engineer & CCTV system integration across train types, vendor collaboration challenges, data management via Network Video Recorder, operational design constraints \\
+
+November 9,2023 & Innovation Team Demonstration & Team Optic (CCTV Innovation Team) & AI-driven CCTV development process, risk assessment procedures, proof-of-concept limitations, stakeholder requirement cycles \\
+
+December 19,2023 & Operational Site Visit & NS Central Surveillance Center (20 security officers, 1 manager) & Real-time monitoring of 8000+ cameras, emergency response procedures, technology heterogeneity challenges, Genetec system integration \\
+
+October 31,2023 - February 15,2024 & Informal Engineering Conversations & Various technical staff and engineers & Strategic technology adoption decisions, architectural documentation needs, supplier relationship dynamics, certification challenges \\
+
+\\
+Multiple sessions & Participatory Technology Assessments & Cross-functional development teams & System architecture evaluations, hardware-software integration testing, stakeholder alignment processes, implementation barriers \\
+
+\hline
+\end{tabular}
+\label{tab:participant_observations}
+\end{table}
+% End included file: observer.tex
+
+
+We also conducted ten semi-structured interviews with key stakeholders from the NS and external consultancy firms. The interview participants, detailed in Table~\ref{tab:interviewees}, represented diverse roles and forms of expertise to ensure a comprehensive coverage of perspectives on the digital transformation of railway operations. The interview protocol included open-ended questions about the interviewee's perspective on digital transformation, railway innovation processes, and technology integration strategies. The interviews explored six primary themes:
+\begin{itemize}
+\item current digital transformation initiatives and challenges;
+\item stakeholder roles and relationships in innovation processes;
+\item technology adoption decision-making processes;
+\item safety and regulatory considerations;
+\item supplier relationship management;
+\item organizational change implications.
+\end{itemize}
+Each interview lasted between 60 and 90 minutes and was conducted between October 2023 and February 2024. 
+
+
+% Begin included file: interviewees.tex
+\begin{table}[H]
+\isPreprints{\centering}{} % Only used for preprints
+\caption{Interview Participants and Roles}
+\label{tab:interviewees}
+\begin{tabular}{@{}lc@{}}
+\toprule
+\textbf{Role} & \textbf{Count}\\
+\midrule
+Business Consultants & 2 \\
+Enterprise Architects  & 2 \\
+Project Leader & 1 \\
+IT Consultant & 1 \\
+Cluster Leaders & 2 \\
+Technical Specialists & 2 \\
+\midrule
+Total& 10\\
+\bottomrule
+\end{tabular}
+\end{table}
+% End included file: interviewees.tex
+
+
+
+% End included file: datacollection.tex
+
+
+% Begin included file: findings.tex
+\section{Findings}
+Following the DS approach outlined in the previous section, we here report the main results in each phase: explore, synthesize, create, and evaluate. Notably, while the exploration phase also draws on interview data, we only quote from these data in our report of the synthesis phase because the latter provides a more deliberate structure (of design propositions) for doing so.  
+
+\subsection{Explore Phase: Train Operator as an Asset-intensive Company}
+In this first phase, we explored the basic constraints that arise from conventional requirements-driven procurement methods in companies with physical assets that have very long lifecycles \citep{Uyarra2014}. 
+
+These constraints are evident in the CCTV case of NS trains. Figure \ref{fig:cctv} provides an abstract representation of a typical onboard CCTV. There are two separate networks on any train. First, the safety and security network, in which the Train Management Control System (TCMS) for the driver is located; this safety domain also includes a separate Human-Computer-Interface (HCI) for the driver to access extra info, like camera images (see at the left side of Fig. 2). The second network is for comfort and utility purposes, that is, managing front cameras, door cameras (to watch the safe entry of passengers), and cabin cameras. This network also contains the Onboard Information System (OBIS), Network Video Recorder (NVR) and modem connections to the shoreside CCTV management system. 
+
+\begin{figure}[H]
+    \isPreprints{\centering}{} % Only used for preprints
+    \includegraphics[width=1\textwidth]{figures/cctv.png}
+    \caption{\textsf{Abstract schematic of onboard Camera's}}
+    \label{fig:cctv}
+\end{figure}
+
+The AI module is positioned next to OBIS and NVR in Figure 2. In this respect, cabin cameras are used for various purposes like passenger counting and empty train detecting, which are part of regular train operations; but these cameras can also be used for advanced AI-driven applications regarding social safety (e.g., aggression detection), lost luggage, or even weapon detection. By default, all indications generated from these applications need to be shared directly with the driver, who has the primary responsibility for safety on the train; on a secondary basis, all indications are also shared with shore-side systems. The Train Digitalization department of NS is responsible for all systems on the train, including operations, partner management, interfaces, and standardization across all train series.
+
+Our field notes (as participant-observers) also suggest that conventional tender processes, designed for mature technologies with established specifications, are inadequate for emerging digital technologies (e.g., applicable to the CCTV system in NS trains), characterized by rapid evolution and uncertain market readiness. That is, these digital technologies are temporally misaligned with train procurement cycles that can span up to ten years from the train's initial conception to operational deployment. The case of the new DDNG train illustrates this timeline, as shown in Figure \ref{fig:timeline}. This process began with its initial design in 2018 and then involved the development of the Reference Architecture (RA) until 2023. A critical design freeze then locks the train's specifications when these are handed over to the train builder. Operational deployment of the DDNG train is planned as of 2028.
+
+This extended timeline creates two significant challenges. First, technologies specified during the early design phases may become obsolete by the time they are actually implemented. Digital innovations typically evolve in much shorter cycles, creating a mismatch between the procurement timeline and the speed of digital technology development. Second, the extended procurement timeline also implies some new (digital or other) technologies cannot be integrated in the new train, once the RA specifications have been send to the train builder.
+
+\begin{figure*}[ht!]
+    \centering
+    \includegraphics[width=\textwidth]{figures/timeline.png}
+    \caption{\textsf{Design timeline of DDNG, the new NS train series}}
+    \label{fig:timeline}
+\end{figure*}
+
+This mismatch between procurement timelines and digital innovation cycles requires the development of a novel process model that accommodates both traditional procurement requirements and dynamic innovation needs. Our findings in the first phase suggest that such a process model should integrate two pathways for technology development: in-house R\&D capabilities for early-stage technologies and collaborative supplier development for market-ready solutions. This dual approach acknowledges that digital innovation requires flexible and iterative (in-house) processes that can adapt to technological uncertainty, while maintaining operational safety and regulatory compliance. It would also have to align the ten-year asset development cycle with rapid digital advancements. The design freeze phenomenon observed in the DDNG case, where specifications become immutable after five years, demonstrates the critical need for such a careful alignment.
+
+
+
+% End included file: findings.tex
+
+
+% Begin included file: propositions.tex
+\subsection{Synthesize Phase: Design Propositions for Digital Innovation in Asset-Intensive Companies}
+
+The interview and participant-observation data were synthesized in six design propositions (DPs) that address the primary challenges of digital transformation in asset-intensive companies. These propositions arise from a systematic analysis of stakeholder perspectives and also reflects theoretically grounded mechanisms for managing the complex interplay between technological dynamism and operational stability. Each DP addresses specific aspects of the innovation process, while contributing to an integrated approach that enables sustainable digital transformation within the constraints of asset-intensive operations. As explained in section 3, the DPs are formulated in terms of the CAMO format.
+
+\subsubsection*{DP1: Market Readiness Assessment}
+Asset-intensive companies need to evaluate both technological maturity and market availability in preparing and making strategic sourcing decisions about digital innovation. This involves assessing market readiness against internal capabilities to determine whether to pursue an early adoption strategy or only adopt proven market solutions. Our data suggest a nuanced approach to technology adoption within railway operations, as a cluster lead expressed: \textit{"Travel information systems are now being developed in-house while standards are available in the open market."} This reflects the complexity of decision-making processes that need to balance and switch between between internal development and market procurement.
+
+The technology integration strategy of the NS demonstrates a broad spectrum, spanning from internal development to "best-of-breed" market solutions, with collaboration as the central organizing principle. The company oscillates between early adopter and smart follower roles, based on supply availability and a dynamic evaluation process that considers both market maturity and the complexity of internal developments. This is exemplified by Team Optic's development of perception modules for recognizing (specifically Dutch) railway signage and signals, for which market solutions prove to be insufficient.
+
+One of the enterprise architects highlighted the ongoing transition within the NS toward using commercial products to improve operational capabilities. This transition marks a shift from a traditional build-centric to a purchase-centric approach. A systematic approach to evaluating market readiness would enable railway operators to assess technology maturity before implementation decisions, with the NS evaluating market readiness against internal capabilities to determine whether to pursue early adoption strategies or follow proven market solutions. We synthesize these findings in the DP described in Table 3, which extends the literature on Technology Readiness Level frameworks \citep{Olechowski2020, Nasa2016} by incorporating market dynamics and supplier maturity \citep{Kobos2018, Vik2021} to bridge the gap between purely technical assessments and complex market realities.
+\begin{table}[H]
+\centering
+\caption{DP1: Market Readiness Assessment}
+\footnotesize
+\begin{tabular}{p{0.15\columnwidth}|p{0.75\columnwidth}}
+\hline
+\textbf{CAMO} & \textbf{Design proposition}\\
+\hline
+Context & In asset-intensive companies that seek to integrate new technologies in assets with very long lifecycles,\\
+Agency & designers and developers need to assess the performance, reliability, and practical viability of these technologies\\
+Mechanism & applying a systematic evaluation of their market readiness and supplier maturity\\
+Outcome & which leads to well-informed decisions about technology integration and resource allocation.\\
+\hline
+\end{tabular}
+\label{tab:dp1_trl}
+\end{table}
+
+\subsubsection*{DP2: Modular Architecture and Standardization Strategy}
+A Reference Architecture (RA) can serve as an instrument for the modular integration of digital technologies, while maintaining system coherence across diverse asset portfolios. This integration would involve the creation of standardized interfaces that accommodate both current technologies and future innovations. Stakeholders consistently emphasized the strategic importance of modular approaches; for example, a cluster lead said: \textit{"It is essential that this application be modularly integrated."} And an enterprise architect explained the procurement strategy shift: \textit{"we adopt more of a 'buy before make' strategy,"} especially for passenger information systems for which the NS prefers to follow market standards rather than develop tailor-made solutions.
+
+The transition to this (preferred) 'purchasing' model emphasizes the integration of off-the-shelf and Software as a Service solutions, requiring robust supplier and project management capabilities that are key in adapting third-party systems to specific operational needs. This represents a shift from development-centric to managerial and integrative organizational activities. But both enterprise architects and business consultants (interviewed) pointed at major challenges in implementing industry standards because, despite the suppliers' adherence to these standards, product functionalities continue to vary among suppliers, which necessitates custom-made integration work for each module delivered by suppliers. 
+
+Moreover, several enterprise architects highlighted the importance of enterprise architecture: \textit{"This ensures that an NS train can also run on German or Belgian tracks,"} emphasizing interoperability requirements for cross-border European rail operations. The RA's evolution reflects the need for adaptability to future technological changes, as a cluster leader noted: \textit{"We try to look ahead and anticipate what might happen in the future."} This forward-looking approach ensures the RA accommodates current as well as anticipated future functionalities, while providing flexibility for modifications based on advancements in IT and operational technologies. Here, the literature proposes a layered modular architecture theory \citep{Yoo2010, Agarwal2020} that can be extended to asset-intensive contexts in which physical constraints limit modularity options. Digital transformation thus requires new approaches to system architecture that can accommodate both asset legacy issues and emerging digital capabilities.
+
+A cluster leader also acknowledged the practical limitations of achieving true homogeneity, which reflects the variability in component availability from start to end \citep{Baldwin2021, Brauner2022} of the train production process. The NS currently operates approximately 800 trains across the Netherlands, comprising eight different series and a new type coming up; the oldest trains are from 1991 and the most recent one is from 2023. Each type of train is equipped with distinct camera systems and IT layers, depending on the manufacturer and the period of construction. This diversity creates major challenges for replacing parts, as new components must fit into older spaces while meeting updated specifications to ensure correct configuration and compliance with international standards. The design proposition in Table 4 synthesizes the insights arising from our findings on modular architecture and standardization.
+
+\begin{table}[H]
+\centering
+\caption{DP2: Modular Architecture and Standardization Strategy}
+\footnotesize
+\begin{tabular}{p{0.15\columnwidth}|p{0.75\columnwidth}}
+\hline
+\textbf{CAMO} & \textbf{Design proposition}\\
+\hline
+Context & In asset-intensive companies exposed to an increasing complexity in software systems and technology requirements,\\
+Agency & developers and system architects need to create systems that focus on specific functions and interact with others via well-defined interfaces\\
+Mechanism & drawing on modular systems that are rather easy to understand, develop, and maintain\\
+Outcome & which facilitates the integration of new technologies and the adaptation to evolving business needs.\\
+\hline
+\end{tabular}
+\label{tab:dp2_modular}
+\end{table}
+
+\subsubsection*{DP3: Regulatory Compliance and Safety Integration}
+Safety and regulatory considerations represent essential constraints that must be systematically integrated into digital innovation processes, rather than treated as external barriers. This requires collaborative frameworks between technical teams, legal experts, and safety committees. Our data consistently highlight the paramount importance of safety considerations, with one cluster leader emphasizing: \textit{"There must always be attention to risk"}; this implies operational risk and safety considerations are central in all innovation decisions. This conservative stance with regard to novel technologies reflects the railway operator's commitment to maintaining operational integrity while pursuing technological transformation. The challenge of incorporating new hardware components is also evident from the observation of a project leader: \textit{"We are only allowed to install RAIL-certified hardware." }The RAIL certification process, governed by specific standards and EU regulations, tends to significantly delay the integration of advanced technologies into train operations, creating a tension between innovation speed and safety requirements.
+
+An enterprise architect emphasized the critical balance \textit{"in which the CCTV chain can embrace many innovations, especially in the area of digital security,"} while maintaining compliance with safety and operational protocols. \citet{Zhu2023} and \citet{Kieslich2022} address the multifaceted challenges of integrating cyber-physical systems. Our data demonstrate how railway operators manage multiple constraints during technology adoption, by means of structural collaboration between developers, legal experts, and safety committees which implement risk mitigation and compliance mechanisms. DP3 thus integrates institutional theory (see section 2) with innovation processes to specify how asset-intensive companies can foster risk mitigation and regulatory compliance (see Table 5).
+
+%dp5
+\begin{table}[H]
+\centering
+\caption{DP3: Regulatory Compliance and Safety Integration}
+\footnotesize
+\begin{tabular}{p{0.15\columnwidth}|p{0.75\columnwidth}}
+\hline
+\textbf{CAMO} & \textbf{Design proposition}\\
+\hline
+Context & In asset-intensive companies that adopt cyber-physical systems in safety-critical environments,\\
+Agency & developers, legal experts, and ethics committees must collaborate to continually update legal regulations, craft ethical frameworks, and set safety standards\\
+Mechanism & fostering risk mitigation and regulatory compliance in a systematic manner\\
+Outcome & which ensures systems are deployed in ways that are legally sound and ethically responsible and adhere to safety and maturity standards.\\
+\hline
+\end{tabular}
+\label{tab:dp3_security}
+\end{table}
+
+\subsubsection*{DP4: Temporal Coordination and Flexibility Management}
+Asset-intensive companies must develop capabilities to manage the misalignment between long development cycles and rapidly evolving technologies by way of adaptive governance structures and flexible implementation approaches. This involves balancing long-term commitments with technological adaptability. These challenges were illustrated by a project leader defining this key challenge: \textit{"Rapid technological developments make uniformity between trains challenging."} In this respect, it is difficult to integrate the ten-year train development cycle (outlined earlier) with rapidly advancing technologies: once the final RA is submitted to train builders five years into the process, design modifications become problematic and the RA is potentially outdated by the time the new train is deployed.
+
+The two interviewed cluster leaders both pointed at the financial implications of flexibility, noting that, while adaptation to accommodate new technologies (sometimes) remains possible, it does incur huge costs due to investments in component redevelopment. In turn, this creates a financial risk that led the cluster leaders to suggest that IT procurement should be decoupled from train tenders. This recommendation would involve completely eliminating IT purchases from train procurement tenders. One of the cluster leaders also expected that there will be (a growing need for) more diversification of the train portfolio, with more train types but fewer units per type. This approach would promote innovation and accelerate the integration of new (e.g., digital) technologies, while reducing the risk of technological obsolescence.
+
+More specifically, the transition to 5G networks and the increasing obsolescence of physical components (like network switches, modems and antennas) illustrate the difficulty of maintaining consistent technological standards across all train operations of the NS. The key challenge here is to reconcile the need for flexibility with the operational requirements of safety, reliability, and long-term asset management, which requires an innovative approach to development processes that simultaneously accommodate stability and adaptability requirements. DP4 addresses the basic tension between control and flexibility identified in the literature on organizational design \citep{Gregory2015, liu2018capability}, extending it to digital innovation in asset-intensive companies for which temporal coordination is critical in managing the risks of technological obsolescence (see Table 6).
+
+%dp4
+\begin{table}[H]
+\centering
+\caption{DP4: Temporal Coordination and Flexibility Management}
+\footnotesize
+\begin{tabular}{p{0.15\columnwidth}|p{0.75\columnwidth}}
+\hline
+\textbf{CAMO} & \textbf{Design proposition}\\
+\hline
+Context & In asset-intensive companies that operate on physical assets with very long lifecycles,\\
+Agency & top managers should embrace continuous deployment and integration principles as well as adapative governance structures\\ 
+Mechanism & enabling dynamic adjustments to evolving requirements\\
+Outcome & which improves operational efficiency, enhances product innovation, and facilitates faster adaptation to technological and market changes.\\
+\hline
+\end{tabular}
+\label{tab:dp4_temporal}
+\end{table}
+
+\subsubsection*{DP5: Ecosystem Governance and Partnership Strategy}
+Strategic sourcing decisions must account for the complex interplay between internal capabilities, external partnerships, and market dynamics. This involves developing governance structures that can effectively manage concurrent strategies of buying, making, and partnering. The complexity of partnerships with suppliers is evident, for example, when a cluster leader highlighted that \textit{"from our expertise, we can grow ourselves with the help of a supplier,"} thereby emphasizing that the current ownership model of NS may evolve in the future. This cluster leader referred to the example of the "\textit{train as a service}" model, exemplified by Alstom's services to Danish railways (which procures trains as a complete service from Alstom, including their deployment), which strongly contrasts with the current ownership model of NS. The same cluster leader pointed at the challenge of collaborative innovation within tender processes in which \textit{"you have to specify tenders in advance,"} showing how procurement processes constrain the integration of collaborative developments into operational fleets. 
+
+Our data suggest that the NS is committed to maintaining a balance between external collaborations and in-house R\&D to ensure consistent innovation and flexibility. This highlights the importance of maintaining fairness and transparency in procurement, while supporting market innovation through collaborative partnerships. The top management of NS does acknowledge that the full ownership of trains could limit its modification capabilities. NS top managers thus envision a new ownership model in which the NS gradually acquires ownership of newly acquired trains, aiming for full ownership 15 years after the initial procurement. The shared ownership with the train's manufacturer would create a setting in which the NS and manufacturer have more shared incentives to collaborate on upgrading the train with (e.g., digital) innovations. This is called a vertical disintegration strategy in the literature \citep{Jacobides2006, Jacobides2016}, which focuses on core competencies while outsourcing non-core activities to enhance flexibility and utilize external expertise. Railway operators may benefit from (partial) vertical disintegration by adapting their procurement and service models. 
+
+More generally speaking, \citep{Svahn2017, Sanchez1996} address the tension between control and flexibility, focusing on adaptability and responsiveness to changing conditions while deliberately managing the inherent tension with structured control processes. DP 5 therefore draws on concurrent sourcing theory \citep{Parmigiani2007} and ecosystem governance frameworks \citep{Wareham2014TechnologyGovernance} to manage the unique challenges of digital innovation partnerships within asset-intensive companies (see Table 7).
+
+%dp12
+\begin{table}[H]
+\centering
+\caption{DP5: Ecosystem Governance and Partnership Strategy}
+\footnotesize
+\begin{tabular}{p{0.15\columnwidth}|p{0.75\columnwidth}}
+\hline
+\textbf{CAMO} & \textbf{Design proposition}\\
+\hline
+Context & In asset-intensive companies operating in competitive environments with complex supplier ecosystems,\\
+Agency & top managers need to focus on core competencies, while strategically initiating and sustaining external partnerships\\
+Mechanism & exploiting the benefits from specialization as well as innovation, without the full costs and risks arising from in-house development\\
+Outcome & which enhances organizational flexibility as well as collaborative innovation with external partners.\\
+\hline
+\end{tabular}
+\label{tab:dp6_itservicemodels}
+\end{table}
+
+\subsubsection*{DP6: Organizational Capability Development}
+Asset-intensive companies have to build dynamic capabilities for sensing opportunities, seizing resources, and reconfiguring operations to manage digital transformation effectively \citep{Warner2019, Volpentesta2023}. This requires structured engagement with internal operations teams, external technology providers, academic institutions, and industry associations. In addition, it involves managing changes in organizational identity, while developing new competencies. Our data illustrate these challenges of organizational transformation. Both cluster leaders noted major changes in the existing NS strategy for digital innovation (launched two years earlier), implying a move from a make-strategy to a buy-strategy. One of the interviewed consultants explained the new strategic focus: \textit{"This strategy is about purchasing more digital products and responding to market trends, rather than developing its own solutions."}  This transformation requires role adjustments and potentially reduces the size of the R\&D workforce, due to decreased needs for internal development. It also introduces ethical challenges among employees, particularly with respect to AI detection functions. The consultant noted the personal impact of this transformation: \textit{"A system engineer even dropped out because of personal concerns."} 
+
+The transformation is an essential shift in the organizational identity of the NS, from a development-centric to an integrative railway operator, which requires sophisticated changes that address technological, social and ethical dimensions of digital transformation. The study by \citet{Tripsas2009TechnologyCompany} analyzed how organizational identity serves both as a lens to evaluate technological opportunities and as a filter for strategic action. The last design proposition therefore integrates dynamic capabilities theory \cite{Teece2007} with organizational identity perspectives \citep{Schad2016, Piccoli2024}, to provide guidance in how asset-intensive firms can build adaptive capabilities while managing the challenges arising from digital transformation; this requires a comprehensive approach to capability development, one that considers both technological and cultural dimensions (see Table 8).
+
+%dp6
+\begin{table}[H]
+\centering
+\caption{DP6: Organizational Capability Development}
+\footnotesize
+\begin{tabular}{p{0.15\columnwidth}|p{0.75\columnwidth}}
+\hline
+\textbf{CAMO} & \textbf{Design proposition}\\
+\hline
+Context & In asset-intensive companies facing technologies that challenge established organizational identities and capabilities,\\
+Agency & top managers and their support staff need to acknowledge these challenges by\\
+Mechanism & building new competencies within and outside the organization and breaking down old ones\\
+Outcome & which enables them to remain competitive and foster innovation while maintaining operational excellence.\\
+\hline
+\end{tabular}
+\label{tab:dp6_capability}
+\end{table}
+
+
+
+
+
+
+% End included file: propositions.tex
+
+
+% Begin included file: model.tex
+\subsection{Create Phase: The Iterative Development \& Adoption Model (IDAM)}
+
+The six design propositions, developed previously, informed the creation of a process tool: the so-called \textit{Iterative Development \& Adoption Model (IDAM)}. IDAM addresses a key theoretical gap in the literature on digital transformation by asset-intensive companies: the temporal misalignment between rapid cycles of digital innovation and the extended life-cycles of physical assets in these companies. The IDAM tool operationalizes the assessment of market maturity as the primary mechanism for managing make-to-buy transitions in digital innovation contexts. It integrates the theory of dynamic capabilities \citep{Teece2007, Teece2017} with the literature on industry architecture \citep{Jacobides2016} and digital innovation \citep{Nylen2015DigitalInnovation}. Figure~\ref{fig:idam} provides a visual overview of IDAM. 
+
+Accordingly, IDAM provides structured guidance via four iterative phases that build organizational capabilities, while managing temporal coordination challenges. It allows for early introductions of new (e.g., digital) technologies, also in areas where the market of suppliers has not fully evolved yet. As such, it differs from stage-gate processes that focus on whether or not to continue investing in the development of specific new products\citep{Cooper1983ADevelopment}. The remainder of this section describes each key step (i.e., ideate, assess, realize, and review) in the model.
+
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{figures/model.png}
+    \caption{\textsf{The Iterative Development \& Adoption Model (IDAM)}}
+    \label{fig:idam}
+\end{figure}
+
+\textbf{Ideate: Collaborative Sensing and Opportunity Recognition}. The ideation phase operationalizes dynamic capabilities theory's sensing dimension \citep{Teece2007}, by identifying digital innovation opportunities that are aligned with operational needs and strategic objectives. The key question \textit{"What is needed?"} extends the company's sensing capabilities beyond its organizational boundaries by means of collaborative processes. DP6 (Organizational Capability Development) drives this phase by establishing systematic sensing routines that help organizations identify innovation opportunities, through structured engagement with internal operations teams, external technology providers, academic institutions, and industry associations. DP4 implies that these opportunities need to be assessed from both the immediate operational requirements and the long-term implications for the asset lifecycle, to prevent an unsustainable misalignment. Here, collaborative innovation allows the company to draw on external expertise to identify promising opportunities at the intersection of digital technology and physical assets in heavily regulated environments.
+
+\textbf{Assess: Market Maturity Evaluation and Strategic Sourcing}. The assessment phase serves as a critical decision point, in which the evaluation of market maturity determines the most effective sourcing strategies for the innovation opportunities identified. It addresses the question\textit{"What is available?"} by means of structured technological and market readiness evaluations. DP1 (Market-Technology Readiness Assessment) points out that objective evaluation criteria need to be formulated for assessing both technological maturity and market availability, which in turn guides the innovation journey from make to sourcing decisions as the market matures. The assessment in this phase employs four innovation levels, which are further detailed in a nine-level Market Readiness Level (MRL) scale; Table~\ref{tab:mrl} provides the complete scale. The four levels are:
+\begin{itemize}
+    \item \textit{Research Level (MRL 1):} Early-stage technologies (e.g., arising from internal R\&D or academic research) that are not yet transformed into solutions. Such a technology typically entails a proof-of-concept, but is not adequately prototyped yet; this technology is therefore characterized by high levels of risk and requires substantial investments in its further development. These proof-of-concepts often provide promising opportunities to be explored for future adoption. 
+    \item \textit{Experimental Level (MRL 2-3:} Prototypes of new technologies in their experimental stages which are not (yet) fully transformed into viable market solutions; they therefore require (further) internal R\&D investments and substantial efforts in capability building.    
+    \item \textit{Co-development Level (MRL 4-6):} Technologies available as emerging market solutions with reliable suppliers as partners. These partnerships enable risk-sharing and collaborative capability development.
+    \item \textit{Sourcing Level (MRL 7-9):} Increasingly mature market solutions with multiple suppliers, which enables a focus on integration rather than development. Functional requirements can be specified in a relatively straightforward manner.
+\end{itemize}
+
+The design of the assessment phase is especially informed by DP5 on ecosystem governance and partnership strategy and DP3 about regulatory compliance and safety integration. This phase guides make-or-buy decisions by creating and applying evaluation criteria that account for temporal misalignment. Market maturity here is the primary determinant of the decision about whether or not to source (i.e., 'buy') from external suppliers, moderated by institutional constraints.
+
+\textbf{Realize: Architecture Integration and Development Pathways}. The realization phase focuses on the question \textit{"What to build now?"} by implementing different development pathways aligned with market readiness levels, while maintaining system coherence through modular architecture principles. DP2 regarding modular architecture and standardization strategy provides the structural foundation for integrating components from different sourcing strategies within a coherent system architecture. 
+
+The realization phase distinguishes between two types of Reference Architecture (RA) based on technology maturity. The first type, called \textit{Development RA}, is designed for emerging technologies that require flexibility and experimentation. This developmental approach establishes experimental platforms and research capabilities to accommodate the high level of technological uncertainty. The second type, called the \textit{Integration RA}, is designed for mature market solutions that prioritize standardization and reliability. This integration approach provides standardized interfaces and integration protocols for proven technologies. The distinction between the two types enables the asset-intensive company to apply different architectural strategies, contingent on the market maturity level for the technology being integrated. 
+
+In addition to DP2, two other DPs informed the creation of the realization phase. DP5 structures the implementation complexity when multiple sourcing approaches are simultaneously used, by establishing governance structures for co-development partnerships, supplier relationships, and internal R\&D coordination. In addition, DP3 ensures consistent safety-oriented models that accommodate both experimental developments and mature external solutions. This creates distinct pathways, that is, internal R\&D labs for low-maturity technologies, co-development facilities for medium-maturity solutions, and integration platforms for high-maturity market offerings.
+
+\textbf{Review: Organizational Learning and Iterative Refinement}. Finally, the review phase addresses \textit{"What to do next?"} by capturing the insights and learnings that arise from the experiences obtained in the realization phase and translating these insights into improvements of future innovation cycles. In this respect, DP4 implies these insights have to be incorporated into long-term planning and capability roadmaps, to ensure that the experiences in short-term implementation efforts inform long-term strategic decisions. Moreover, DP6 recommends that one learns from implementation experiences by rigorously documenting successes, failures, and causal factors, which serves to create an organizational memory that improves future decision making. The review phase is thus fueled by structured feedback loops that improve the company's capability to navigate digital transformation while maintaining operational excellence.
+
+
+% Begin included file: mrl.tex
+\begin{table}[H]
+\isPreprints{\centering}{} % Only used for preprints
+\scriptsize
+\caption{Four Innovation Levels Aligned with Nine Market Readiness Levels}
+\begin{tabular}{p{0.14\textwidth}p{0.14\textwidth}p{0.05\textwidth}p{0.15\textwidth}p{0.40\textwidth}}
+\hline
+\textbf{Innovation Level} & \textbf{Requirement Level} & \textbf{MRL Level}& \textbf{Market Context} & \textbf{Description} \\
+\hline
+Research level& - & MRL 1& Basic Innovation Opportunity & Initial market need identified and basic digital solution concept formulated. In-house or academic research into emerging technologies and market gaps. No mature functional requirements and no proven business case yet. \\
+\hline
+Experimental level& Development RA& MRL 2& Concept Validation & Digital concept tested through market research, user interviews, and basic prototyping. In-house development of minimum viable features to validate market assumptions. \\
+
+& & MRL 3& Market Proof of Concept & Working prototype demonstrated to potential users/customers. Market feedback collected and business model hypotheses tested. In-house development with clear user validation. \\
+\hline
+Co-development level& Development RA& MRL 4& Technical Partnership Ready & Solution architecture defined with detailed technical specifications. Ready for co-development with technology partners or suppliers based on technical requirements. \\
+
+& & MRL 5& Pilot Market Testing & Beta version deployed with select customers or other users. Co-development partnerships established. Technical specifications proven in real market conditions with limited audience.\\
+
+& & MRL 6& Market Validation Complete & Solution tested across multiple market segments. Partnership models validated. Technical specifications mature enough for broader implementation or supplier engagement. \\
+\hline
+Sourcing level& Integration RA& MRL 7& Commercial Market Entry & Functional specifications defined for market-ready solution. Multiple suppliers can deliver based on functional requirements. Early commercial deployment beginning. \\
+
+& & MRL 8& Market-Proven Solution & Solution commercially available from multiple suppliers based on functional specs. Proven market adoption, (e.g., aviation or railway) certificates obtained, and clear ROI demonstrated across customer base.\\
+
+& & MRL 9& Market Standard / Commodity & Mature market solution with established supplier ecosystem. Standardized functional specifications. Solution widely adopted and considered essential/standard practice in the market.\\
+\hline
+\end{tabular}
+\label{tab:mrl}
+\end{table}
+
+% End included file: mrl.tex
+
+
+Overall, the IDAM model integrates empirical findings and translates theoretical insights from multiple domains into practical guidelines for managing the digital transformation challenges in asset-intensive companies. By systematizing the assessment of market maturity as a key mechanism for managing temporal alignment, IDAM enables asset-intensive companies to pursue innovation across the full spectrum of technological maturity while maintaining operational coherence and safety standards.
+
+
+
+% End included file: model.tex
+
+
+% Begin included file: evaluation.tex
+\subsection{Evaluation Phase: Validating the Model}
+
+The evaluation of the Iterative Development \& Adoption Model (IDAM) model involved a two-step validation process designed to ensure both theoretical rigor and practical applicability.  The first evaluation step involved a formative assessment in the form of an alpha-test of the model \citep{Venable2016, Dimov2023} by the experts interviewed earlier. This test focused on completeness, logical consistency, and alignment with the requirements management process established within the NS. We subsequently also discussed the model with key NS stakeholders, including senior management representatives and core members of the CCTV project team. The multidisciplinary backgrounds of these stakeholders served to assess the IDAM across multiple dimensions, including technical feasibility, organizational alignment, strategic coherence, and operational practicality. One general recommendation received as feedback via this alpha-test was to simplify the visual representation of the model, which initially was a bit more complex than the final version presented in Figure 4. Other major points of feedback are discussed below, when we evaluate the IDAM in terms of the design propositions.
+
+In the second step, we evaluated the IDAM in terms of the six design propositions (formulated in the synthesis phase), thereby providing a more summative evaluation \citep{Venable2016}. This assessment showed that the DPs are incorporated into the final model to different degrees, which underlines the intricate relationship between theoretical concepts and the demands of real-world application. We obtained the following insights from this evaluation step. 
+
+\textit{DP1 (Market-Technology Readiness Assessment)}. This proposition provides a core decision mechanism in IDAM, in the form of clear evaluation criteria and decision pathways through the nine levels of market readiness. All NS stakeholders particularly valued this systematic approach to sourcing decisions, observing that it addresses the major challenges of the NS in aligning decisions about digital technology adoption to the long life-cycle of its physical assets.
+
+\textit{DP2 (Modular Architecture and Standardization Strategy)}. The main thrust of this proposition is directly visible in the realization phase of IDAM, in terms of the clear distinction between the Development and Integration reference architectures. Many experts praised this differentiation in two RAs,  as it addresses the practical needs of managing experimental as well as more mature technologies within the systems of an asset-intensive company. This modular approach also resonated strongly with technological experts within the NS, who recognized its value in managing the complexity of concurrent sourcing strategies.
+
+\textit{DP3 (Regulatory Compliance and Safety Integration)}. DP3 functions as a constraint throughout all phases of the IDAM. But several stakeholders noted that requirements regarding regulatory compliance and safety integration are not explicitly visualized in Figure~\ref{fig:idam} , although these requirements provide essential boundaries for all innovation activities. Interviewees from the Safety and Compliance department of NS emphasized how IDAM's systematic approach improves their ability to evaluate and approve digital innovations by providing a structured process and clear criteria.
+
+\textit{DP4 (Temporal Coordination and Flexibility Management)}. DP4 influenced IDAM's overall iterative structure and informed the distinction between the Development RA and Integration RA. Many NS stakeholders recognized how this proposition addresses one of their most pressing challenges: managing digital innovation within long-term asset commitments. They especially praised the iterative nature of IDAM for its ability to accommodate the continually changing technological landscape while maintaining strategic coherence.
+
+\textit{DP5 (Ecosystem Governance and Partnership Strategy)}. This proposition shaped multiple aspects of IDAM, particularly in the assessment and realization phases in which partnership evaluation and partnership management become critical. NS stakeholders noted how the model's explicit consideration of different sourcing strategies (make, buy, partner) aligns well with how the approach of the NS to collaborative innovation and supplier relationships has recently been evolving.
+
+\textit{DP6 (Organizational Capability Development).} The sixth DP informs the entire model through its emphasis on learning and capability building across all phases. While not presented as a discrete component or step in IDAM, both the experts and stakeholders recognized how the model's design helps to build an asset-intensive company's innovation capabilities through structured processes and iterative learning cycles.
+% End included file: evaluation.tex
+
+
+% Begin included file: conclusions.tex
+\section{Discussion and Conclusion}
+
+This research contributes to the literature on digital transformation and engineering design by extending and integrating extant frameworks to address the unique challenges of digital innovation in asset-intensive industries. The primary contribution of our study is to operationalize the concept of temporal misalignment between digital innovation cycles and physical asset life-cycles, which was not addressed by prior work on digital transformation \citep{Vial2019, Verhoef2021, Hund2021}.
+
+More specifically, IDAM extends dynamic capability (DC) theory \citep{Teece2007, Helfat2007} by introducing "temporally coordinating" as a fourth dimension to sensing, seizing, and reconfiguring. While conventional DC theory assumes that companies are inherently adaptive and flexible \citep{Teece2017, Baishya2025}, our research indicates that industries heavily relying on physical assets must cultivate capabilities in temporal coordination, covering very long asset life-cycles that span several decades. This challenges the assumption about adaptiveness and flexibility inherent in most DC studies and provides a foundation for understanding capability development in asset-intensive environments, in which short-term technological adaptability must coexist with long-term infrastructural commitments.
+
+This study also advances digital innovation theory \citep{Yoo2010, Nambisan2017} with the four innovation levels aligned with Market Readiness, as a core element of IDAM. We thereby extend the widely used Technology Readiness Level scale \citep{Olechowski2020, Nasa2016} by integrating market dynamics, supplier ecosystem maturity, and institutional compatibility. This approach fills an important gap in the digital innovation literature that has almost exclusively focused on software-driven advancements that are not substantially constrained by physical assets and regulatory frameworks \citep{Hund2021, Felicetti2024}. Here, the distinction and complementarity of the Development Reference Architecture and Integration Reference Architecture within IDAM offers a novel perspective on managing innovation and sourcing processes at varying stages of technological progress.
+
+Our study also demonstrates how industry architecture theory \citep{Jacobides2016, Jacobides2022} and institutional theory \citep{DiMaggio1983, Battilana2009} can be methodically integrated with the DC and digital innovation perspectives to address the complex challenges of asset-intensive companies. Consequently, successful digital transformation in a highly regulated industry requires the simultaneous navigation of multiple institutional logics: market efficiency driving digital adoption, safety requirements constraining experimentation, and reliability requirements prioritizing operational continuity. The IDAM approach shows how asset-intensive companies can manage these demands through ongoing evaluations of market maturity (of technological solutions). The six design propositions, developed in this paper, theoretically underpin the IDAM in terms of dynamic capability, digital innovation, industry architecture, and institutional demands. This theoretical integration responds to calls for a more comprehensive theoretical approach to digital transformation, one that accounts for technological, organizational, and institutional factors simultaneously \citep{Buck2023, Troilo2017, Volpentesta2023}.
+
+From a more practical point of view, IDAM provides actionable guidance for technology adoption decisions based on an analysis of market readiness. This allows managers of asset-intensive companies to assess digital innovation opportunities and mitigate their associated risks. IDAM also allows them to monitor the operational impact of a new technology in a controlled pilot setting, before deciding to deploy this technology on a broader scale. We also found that the shift from co-development to supplier-buyer relationships requires effective expectation management from both sides as well as a well-defined allocation of responsibilities among the partners involved. As the market of technology suppliers matures from co-development( MRL 4-6) to external sourcing (MRL 7-9 , the partnership structure develops from a collaborative innovation arrangement to a more conventional buyer-supplier relationship. This results in requirements becoming more functionally specified. Any asset-intensive company as well as its suppliers should be fully aware of these dynamics and IDAM can help develop this awareness.
+
+Our study has several limitations. The IDAM and its underlying design propositions were developed for a Dutch railway operator, as an exemplary asset-intensive company. Future work will have to explore whether the IDAM approach can be generalized and applied to railway operators in other countries (e.g., with distinct institutional demands) and other types of asset-intensive companies (e.g., in the aviation and shipping industries). Another limitation arises from the validation of the IDAM, which was primarily done via alpha-tests with key stakeholders within the NS as well as various external experts. A more substantial test would involve a longitudinal study of IDAM's application in navigating ditigal transformation (at the NS and other asset-intensive companies) across the life-cycle of a specific asset (e.g., a set of new trains ordered, manufactured, and employed). Such a test requires a field study of at least 10 years, but preferably much longer, given the extremely long life-cycle of this type of asset. This longitudinal test was not feasible in the context of the research reported in this article, but future work in this area should consider deeper longitudinal research. 
+
+In sum, digital transformation in asset-intensive companies requires a novel approach, one that moves beyond the transformation lenses created for software-driven and other companies without durable physical assets. By extending and integrating theories in the area of dynamic capability, digital innovation, industry architecture and institutional compliance, we developed the IDAM to help asset-intensive companies navigate the challenges of digital transformation while maintaining their operational integrity and regulatory compliance.
+% End included file: conclusions.tex
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\vspace{6pt} 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Only used for preprtints:
+% \supplementary{The following supporting information can be downloaded at the website of this paper posted on \href{https://www.preprints.org/}{Preprints.org}.}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\authorcontributions{For research articles with several authors, a short paragraph specifying their individual contributions must be provided. The following statements should be used ``Conceptualization, Bernard Jenniskens and Ilja Heitlager; methodology, Bernard Jenniskens; software, Bernard Jenniskens; validation, Bernard Jenniskens, Ilja Heitlager and Georges Romme; formal analysis, Ilja Heitlager; investigation, Bernard Jenniskens; data curation, Bernard Jenniskens; writing---original draft preparation, Ilja Heitlager; writing---review and editing, Georges Romme; visualization, Ilja Heitlager; supervision, Georges Romme; project administration, Ilja Heitlager;  All authors have read and agreed to the published version of the manuscript.'}
+
+\funding{This research received no external funding.}
+
+\institutionalreview{Not applicable}
+
+\informedconsent{Informed consent was obtained from all subjects involved in the study.}
+
+% \dataavailability{We encourage all authors of articles published in MDPI journals to share their research data. In this section, please provide details regarding where data supporting reported results can be found, including links to publicly archived datasets analyzed or generated during the study. Where no new data were created, or where data is unavailable due to privacy or ethical restrictions, a statement is still required. Suggested Data Availability Statements are available in section ``MDPI Research Data Policies'' at \url{https://www.mdpi.com/ethics}.} 
+
+\acknowledgments{During the preparation of the manuscript, the authors used Claude.ai (Sonnet 4) to evaluate and correct draft texts. The authors have reviewed and edited the content and take full responsibility for the content of this publication.}
+
+\conflictsofinterest{The authors declare no conflicts of interest.} 
+
+
+% Begin included file: abbreviations.tex
+\abbreviations{Abbreviations}{
+The following abbreviations are used in this manuscript:
+\\
+
+\begin{tabular}{@{}ll}
+AI & Artificial Intelligence \\
+CAMO & Context-Agency-Mechanism-Outcome \\
+CCTV & Closed-Circuit Television \\
+ DC&Dynamic Capability\\
+DDNG & Double Deck New Generation \\
+DP& Design Proposition\\
+DS & Design Science \\
+HCI & Human-Computer Interface \\
+IDAM & Iterative Development \& Adoption Model \\
+IoT & Internet of Things \\
+MRL & Market Readiness Level \\
+NS & Nederlandse Spoorwegen (Dutch Railways) \\
+NVR & Network Video Recorder \\
+OBIS & Onboard Information System \\
+RA& Reference Architecture\\
+TCMS& Train Management Control System\\
+TRL& Technology Readiness Level\\
+& \\
+& \\
+\end{tabular}
+}
+% End included file: abbreviations.tex
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\isPreprints{}{% This command is only used for ``preprints''.
+\begin{adjustwidth}{-\extralength}{0cm}
+} % If the paper is ``preprints'', please uncomment this parenthesis.
+%\printendnotes[custom] % Un-comment to print a list of endnotes
+
+\reftitle{References}
+
+% Please provide either the correct journal abbreviation (e.g. according to the “List of Title Word Abbreviations” http://www.issn.org/services/online-services/access-to-the-ltwa/) or the full name of the journal.
+% Citations and References in Supplementary files are permitted provided that they also appear in the reference list here. 
+
+%=====================================
+% References, variant A: external bibliography
+%=====================================
+\begin{thebibliography}{99}
+\bibitem{Buck2023} Buck, C., Clarke, J., Torres de Oliveira, R., Desouza, K. C., & Maroufkhani, P. (2023). Digital transformation in asset-intensive organisations: The light and the dark side. \textit{Journal of Innovation and Knowledge}, 8(2). \url{https://doi.org/10.1016/j.jik.2023.100335}.
+
+\bibitem{Hoessler2024} Hoessler, S. & Carbon, C. C. (2024). Digital transformation in incumbent companies: a qualitative study on exploration and exploitation activities in innovation. \textit{Journal of Innovation and Entrepreneurship}, 13(1). \url{https://doi.org/10.1186/s13731-024-00404-5}.
+
+\bibitem{Chiaroni2010} Chiaroni, D., Chiesa, V., & Frattini, F. (2010). Unravelling the process from Closed to Open Innovation: Evidence from mature, asset-intensive industries. \textit{R and D Management}, 40(3), 222--245. \url{https://doi.org/10.1111/j.1467-9310.2010.00589.x}.
+
+\bibitem{Troilo2017} Troilo, G., De Luca, L. M., & Guenzi, P. (2017). Linking Data-Rich Environments with Service Innovation in Incumbent Firms: A Conceptual Framework and Research Propositions. \textit{Journal of Product Innovation Management}, 34(5), 617--639. \url{https://doi.org/10.1111/jpim.12395}.
+
+\bibitem{Rousseau2016} Rousseau, M. B., Mathias}, D., Madden}, T., & Crook}, R. (2016). Innovation, firm performance, and appropriation: A meta-analysis. \textit{International Journal of Innovation Management}, 20(03). \url{https://doi.org/10.1142/S136391961650033X}.
+
+\bibitem{Rietveld2016} Rietveld, C. (2016). A longer lifetime for products: Benefits for consumers and companies.
+
+\bibitem{Berman2012} Berman, S. J. (2012). Digital transformation: Opportunities to create new business models. \textit{Strategy and Leadership}, 40(2), 16--24. \url{https://doi.org/10.1108/10878571211209314}.
+
+\bibitem{Vial2019} Vial, G. (2019). Understanding digital transformation: A review and a research agenda. \textit{Journal of Strategic Information Systems}, 28(2), 118--144. \url{https://doi.org/10.1016/j.jsis.2019.01.003}.
+
+\bibitem{Warner2019} Warner, K. S. & Waeger, M. (2019). Building dynamic capabilities for digital transformation: An ongoing process of strategic renewal. \textit{Long Range Planning}, 52(3), 326--349. \url{https://doi.org/10.1016/j.lrp.2018.12.001}.
+
+\bibitem{GarciaMartin2024} (2024). Managing start-up–incumbent digital solution co-creation: a four-phase process for intermediation in innovative contexts. \textit{Industry and Innovation}, 31(5), 579--605. \url{https://doi.org/10.1080/13662716.2023.2189091}.
+
+\bibitem{Jacobides2016} Jacobides, M. G. (2016). Industry Architecture. \url{https://doi.org/10.1057/978-1-349-94848-2{\_}390-1}.
+
+\bibitem{Nambisan2018} Nambisan, S. (2018). Architecture vs. ecosystem perspectives: Reflections on digital innovation. \textit{Information and Organization}, 28(2), 104--106. \url{https://doi.org/10.1016/j.infoandorg.2018.04.003}.
+
+\bibitem{Li2023} Li, P., Xue, R., Shao, S., Zhu, Y., & Liu, Y. (2023). Current state and predicted technological trends in global railway intelligent digital transformation. \textit{Railway Sciences}, 2(4), 397--412. \url{https://doi.org/10.1108/rs-10-2023-0036}.
+
+\bibitem{Sarp2024} Sarp, S., Kuzlu, M., Jovanovic, V., Polat, Z., & Guler, O. (2024). Digitalization of railway transportation through AI-powered services: digital twin trains. \textit{European Transport Research Review}, 16(1), 58. \url{https://doi.org/10.1186/s12544-024-00679-5}.
+
+\bibitem{Volpentesta2023} Volpentesta, T., Spahiu, E., & De Giovanni, P. (2023). A survey on incumbent digital transformation: a paradoxical perspective and research agenda. \textit{European Journal of Innovation Management}, 26(7), 478--501. \url{https://doi.org/10.1108/EJIM-01-2023-0081}.
+
+\bibitem{Romme2021} Romme, A. G. L. & Dimov, D. (2021). Mixing Oil with Water: Framing and Theorizing in Management Research Informed by Design Science. \textit{Designs}, 5(1), 13. \url{https://doi.org/10.3390/designs5010013}.
+
+\bibitem{Dimov2023} Dimov, D., Maula, M., & Romme, A. G. L. (2023). Crafting and Assessing Design Science Research for Entrepreneurship. \textit{Entrepreneurship Theory and Practice}, 47(5), 1543--1567. \url{https://doi.org/10.1177/10422587221128271}.
+
+\bibitem{Keskin2020} Keskin, D. & Romme, A. G. L. (2020). Mixing Oil with Water: How to Effectively Teach Design Science in Management Education?. \textit{BAR - Brazilian Administration Review}, 17(1). \url{https://doi.org/10.1590/1807-7692bar2020190036}.
+
+\bibitem{Denyer2008} Denyer, D., Tranfield, D., & Van Aken, J. E. (2008). Developing Design Propositions Through Research Synthesis. \textit{Organization Studies}, 29(3), 393--413. \url{https://doi.org/10.1177/0170840607088020}.
+
+\bibitem{Eisenhardt2000} Eisenhardt, K. M. & Martin, J. A. (2000). Dynamic capabilities: what are they?. \textit{Strategic Management Journal}, 21(10-11), 1105--1121. \url{https://doi.org/10.1002/1097-0266(200010/11)21:10/11<1105::AID-SMJ133>3.0.CO;2-E}.
+
+\bibitem{Helfat2007} Helfat, C. E., Finkelstein, S., Mitchell, W., Peteraf, M. A., Singh, H., Teece, D. J., & Winter, S. G. (2007). \textit{Dynamic Capabilities: Understanding Strategic Change in Organizations}. Blackwell Publishing: Malden, MA.
+
+\bibitem{Teece2007} Teece, D. J. (2007). Explicating dynamic capabilities: the nature and microfoundations of (sustainable) enterprise performance. \textit{Strategic Management Journal}, 28(13), 1319--1350. \url{https://doi.org/10.1002/smj.640}.
+
+\bibitem{Thomson2022} (2022). A maturity framework for autonomous solutions in manufacturing firms: The interplay of technology, ecosystem, and business model. \textit{International Entrepreneurship and Management Journal}, 18(1), 125--152. \url{https://doi.org/10.1007/s11365-020-00717-3}.
+
+\bibitem{Yoo2012} Yoo, Y., Boland, R. J., Lyytinen, K., & Majchrzak, A. (2012). Organizing for innovation in the digitized world. \textit{Organization Science}, 23(5), 1398--1408. \url{https://doi.org/10.1287/orsc.1120.0771}.
+
+\bibitem{Yoo2010} Yoo, Y., Henfridsson, O., & Lyytinen, K. (2010). The new organizing logic of digital innovation: An agenda for information systems research. \textit{Information Systems Research}, 21(4), 724--735. \url{https://doi.org/10.1287/isre.1100.0322}.
+
+\bibitem{Nambisan2017} Nambisan, S., Lyytinen, K., Majchrzak, A., & Song, M. (2017). Digital Innovation Management: Reinventing Innovation Management Research in a Digital World. \textit{MIS Quarterly}, 41(1), 223--238. \url{https://doi.org/10.25300/MISQ/2017/41:1.03}.
+
+\bibitem{Kagermann2013} Kagermann, H., Helbig, J., Hellinger, A., & Wahlster, W. (2013). Recommendations for implementing the strategic initiative INDUSTRIE 4.0.
+
+\bibitem{Schwab2017} Schwab, K. (2017). \textit{The Fourth Industrial Revolution}. Crown Publishing Group.
+
+\bibitem{Lee2008} Lee, E. A. (2008). Cyber Physical Systems: Design Challenges.
+
+\bibitem{Demeter2021} Demeter, K., Losonci, D., & Nagy, J. (2021). Road to digital manufacturing – a longitudinal case-based analysis. \textit{Journal of Manufacturing Technology Management}, 32(3), 820--839. \url{https://doi.org/10.1108/JMTM-06-2019-0226}.
+
+\bibitem{DiMaggio1983} Dimaggio, P. J. & Powell, W. W. (1983). The Iron Cage Revisited: Institutional Isomorphism and Collective Rationality in Organizational Fields.
+
+\bibitem{Scott2014} Scott, W. R. (2014). \textit{Institutions and organizations: Ideas, interests, and identities}. Sage Publications.
+
+\bibitem{Battilana2009} Battilana, J., Leca, B., & Boxenbaum, E. (2009). How Actors Change Institutions: Towards a Theory of Institutional Entrepreneurship. \textit{Academy of Management Annals}, 3(1), 65--107. \url{https://doi.org/10.1080/19416520903053598}.
+
+\bibitem{Sydow2009} (2009). Organizational Path Dependence: Opening the Black Box. \textit{Academy of Management Review}, 34(4), 689--709. \url{https://doi.org/10.5465/amr.34.4.zok689}.
+
+\bibitem{Mikkola2003} Mikkola, J. H. (2003). Modularity, component outsourcing, and inter‐firm learning. \textit{R{\&}D Management}, 33(4), 439--454. \url{https://doi.org/10.1111/1467-9310.00309}.
+
+\bibitem{Parmigiani2007} Parmigiani, A. (2007). Why do firms both make and buy? An investigation of concurrent sourcing. \textit{Strategic Management Journal}, 28(3), 285--311. \url{https://doi.org/10.1002/smj.580}.
+
+\bibitem{March1991} March, J. G. (1991). Exploration and Exploitation in Organizational Learning. \textit{Organization Science}, 2(1), 71--87.
+
+\bibitem{OReilly2013} O'Reilly, C. A. & Tushman, M. L. (2013). Organizational Ambidexterity: Past, Present, and Future. \textit{Academy of Management Perspectives}, 27(4), 324--338. \url{https://doi.org/10.5465/amp.2013.0025}.
+
+\bibitem{Peffers2018} Peffers, K., Tuunanen, T., & Niehaves, B. (2018). Design science research genres : introduction to the special issue on exemplars and criteria for applicable design science research. \textit{European Journal of Information Systems}, 27(2), 129--139. \url{https://doi.org/10.1080/0960085X.2018.1458066}.
+
+\bibitem{Mohrman2007} Mohrman, S. A. (2007). Having relevance and impact: The benefits of integrating the perspectives of design science and organizational development. \textit{Journal of Applied Behavioral Science}, 43(1), 12--22. \url{https://doi.org/10.1177/0021886306298185}.
+
+\bibitem{Langley2007} Langley, A. (2007). Process thinking in strategic organization. \textit{Strategic Organization}, 5(3), 271--282. \url{https://doi.org/10.1177/1476127007079965}.
+
+\bibitem{Romme2023} (2023). From theories to tools: Calling for research on technological innovation informed by design science. \textit{Technovation}, 121, 102692. \url{https://doi.org/10.1016/j.technovation.2023.102692}.
+
+\bibitem{Elkatawneh2016} Elkatawneh, H. H. (2016). The Five Qualitative Approaches: Problem, Purpose, and Questions/The Role of Theory in the Five Qualitative Approaches/Comparative Case Study. \textit{SSRN Electronic Journal}. \url{https://doi.org/10.2139/ssrn.2761327}.
+
+\bibitem{Bartunek2007} Bartunek, J. M. (2007). Academic-Practitioner Collaboration need not require Joint or Relevant Research: Toward a Relational Scholarship of Integration. \textit{Academy of Management Journal}, 50(6), 1323--1333. \url{https://doi.org/10.5465/amj.2007.28165912}.
+
+\bibitem{Uyarra2014} Uyarra, E., Edler, J., Garcia-Estevez, J., Georghiou, L., & Yeow, J. (2014). Barriers to innovation through public procurement: A supplier perspective. \textit{Technovation}, 34(10), 631--645. \url{https://doi.org/10.1016/j.technovation.2014.04.003}.
+
+\bibitem{Olechowski2020} Olechowski, A. L., Eppinger, S. D., Joglekar, N., & Tomaschek, K. (2020). Technology readiness levels: Shortcomings and improvement opportunities. \textit{Systems Engineering}, 23(4), 395--408. \url{https://doi.org/10.1002/sys.21533}.
+
+\bibitem{Nasa2016} Hirshorn, S. & Jefferies, S. (2016). Final Report of the NASA Technology Readiness Assessment (TRA) Study Team.
+
+\bibitem{Kobos2018} Kobos, P. H., Malczynski, L. A., Walker, L. T. N., Borns, D. J., & Klise, G. T. (2018). Timing is everything: A technology transition framework for regulatory and market readiness levels. \textit{Technological Forecasting and Social Change}, 137, 211--225. \url{https://doi.org/10.1016/j.techfore.2018.07.052}.
+
+\bibitem{Vik2021} Vik, J., Mel{\aa}s, A. M., Str{\ae}te, E. P., & S{\o}raa, R. A. (2021). Balanced readiness level assessment (BRLa): A tool for exploring new and emerging technologies.. \textit{Technological Forecasting and Social Change}, 169, 120854. \url{https://doi.org/10.1016/j.techfore.2021.120854}.
+
+\bibitem{Agarwal2020} Agarwal, G. K., Magnusson, M., & Johanson, A. (2021). Edge AI Driven Technology Advancements Paving Way Towards New Capabilities. \textit{International Journal of Innovation and Technology Management}, 18(01). \url{https://doi.org/10.1142/S0219877020400052}.
+
+\bibitem{Baldwin2021} Baldwin, C. Y. (2021). Design Rules, Volume 2: How Technology Shapes Organizations: Chapter 13 Platform Systems vs. Step Processes - The Value of Options and the Power of Modularity. \textit{SSRN Electronic Journal}. \url{https://doi.org/10.2139/ssrn.3320494}.
+
+\bibitem{Brauner2022} Brauner, P., Dalibor, M., Jarke, M., Kunze, I., Koren, I., Lakemeyer, G., Liebenberg, M., Michael, J., Pennekamp, J., Quix, C., Rumpe, B., Van Der Aalst, W., Wehrle, K., Wortmann, A., & Ziefle, M. (2022). A Computer Science Perspective on Digital Transformation in Production. \textit{ACM Transactions on Internet of Things}, 3(2). \url{https://doi.org/10.1145/3502265}.
+
+\bibitem{Zhu2023} Zhu, Z. (2023). Artificial intelligence in the field of driving. \textit{Applied and Computational Engineering}, 6(1), 530--535. \url{https://doi.org/10.54254/2755-2721/6/20230883}.
+
+\bibitem{Kieslich2022} Kieslich, K., Keller, B., & Starke, C. (2022). Artificial intelligence ethics by design. Evaluating public perception on the importance of ethical design principles of artificial intelligence. \textit{Big Data and Society}, 9(1). \url{https://doi.org/10.1177/20539517221092956}.
+
+\bibitem{Gregory2015} (2015). Paradoxes and the nature of ambidexterity in IT transformation programs. \textit{Information Systems Research}, 26(1), 57--80. \url{https://doi.org/10.1287/isre.2014.0554}.
+
+\bibitem{liu2018capability} Liu, Y., Liao, Y., & Li, Y. (2018). Capability configuration, ambidexterity and performance: Evidence from service outsourcing sector. \textit{International Journal of Production Economics}, 200, 343--352. \url{https://doi.org/10.1016/j.ijpe.2018.04.001}.
+
+\bibitem{Jacobides2006} Jacobides, M. G. & Billinger, S. (2006). Designing the Boundaries of the Firm: From “Make, Buy, or Ally” to the Dynamic Benefits of Vertical Architecture. \textit{Organization Science}, 17(2), 249--261. \url{https://doi.org/10.1287/orsc.1050.0167}.
+
+\bibitem{Svahn2017} Svahn, F., Mathiassen, L., & Lindgren, R. (2017). Embracing Digital Innovation in Incumbent Firms: How Volvo Cars Managed Competing Concerns. \textit{MIS Quarterly}, 1(41), 239--254. \url{https://doi.org/10.25300/MISQ/2017/41.1.12}.
+
+\bibitem{Sanchez1996} Sanchez, R. & Mahoney, J. T. (1996). Modularity, flexibility, and knowledge management in product and organization design. \textit{Strategic Management Journal}, 17(S2), 63--76. \url{https://doi.org/10.1002/smj.4250171107}.
+
+\bibitem{Wareham2014TechnologyGovernance} Wareham, J., Fox, P. B., & Giner, J. L. C. (2014). Technology ecosystem governance. \textit{Organization Science}, 25(4), 1195--1215. \url{https://doi.org/10.1287/orsc.2014.0895}.
+
+\bibitem{Tripsas2009TechnologyCompany} Tripsas, M. (2009). Technology, identity, and inertia through the lens of "The Digital Photography Company". \textit{Organization Science}, 20(2), 441--460. \url{https://doi.org/10.1287/orsc.1080.0419}.
+
+\bibitem{Schad2016} Schad, J., Lewis, M. W., Raisch, S., & Smith, W. K. (2016). Paradox Research in Management Science: Looking Back to Move Forward. \textit{Academy of Management Annals}, 10(1), 5--64. \url{https://doi.org/10.1080/19416520.2016.1162422}.
+
+\bibitem{Piccoli2024} Piccoli, G., Grover, V., & Rodriguez, J. (2024). Digital transformation requires digital resource primacy: Clarification and future research directions. \textit{Journal of Strategic Information Systems}, 33(2). \url{https://doi.org/10.1016/j.jsis.2024.101835}.
+
+\bibitem{Teece2017} Teece, D. J. & Linden, G. (2017). Business models, value capture, and the digital enterprise. \textit{Journal of Organization Design}, 6(1). \url{https://doi.org/10.1186/s41469-017-0018-x}.
+
+\bibitem{Nylen2015DigitalInnovation} (2015). Digital innovation strategy: A framework for diagnosing and improving digital product and service innovation. \textit{Business Horizons}, 58(1), 57--67. \url{https://doi.org/10.1016/j.bushor.2014.09.001}.
+
+\bibitem{Cooper1983ADevelopment} Cooper, R. G. (1983). A process model for industrial new product development. \textit{IEEE Transactions on Engineering Management}, EM-30(1), 2--11. \url{https://doi.org/10.1109/TEM.1983.6448637}.
+
+\bibitem{Venable2016} Venable, J., Pries-Heje, J., & Baskerville, R. (2016). FEDS: a Framework for Evaluation in Design Science Research. \textit{European Journal of Information Systems}, 25(1), 77--89. \url{https://doi.org/10.1057/ejis.2014.36}.
+
+\bibitem{Verhoef2021} Verhoef, P. C., Broekhuizen, T., Bart, Y., Bhattacharya, A., Qi Dong, J., Fabian, N., & Haenlein, M. (2021). Digital transformation: A multidisciplinary reflection and research agenda. \textit{Journal of Business Research}, 122, 889--901. \url{https://doi.org/10.1016/j.jbusres.2019.09.022}.
+
+\bibitem{Hund2021} Hund, A., Wagner, H., Beimborn, D., & Weitzel, T. (2021). Digital innovation: Review and novel perspective. \textit{The Journal of Strategic Information Systems}, 30(4), 101695. \url{https://doi.org/10.1016/j.jsis.2021.101695}.
+
+\bibitem{Baishya2025} Baishya, S., Karna, A., Mahapatra, D., Kumar, S., & Mukherjee, D. (2025). Dynamic managerial capabilities: A critical synthesis and future directions. \textit{Journal of Business Research}, 186, 115015. \url{https://doi.org/10.1016/j.jbusres.2024.115015}.
+
+\bibitem{Felicetti2024} Felicetti, A. M., Corvello, V., & Ammirato, S. (2024). Digital innovation in entrepreneurial firms: a systematic literature review. \textit{Review of Managerial Science}, 18(2), 315--362. \url{https://doi.org/10.1007/s11846-023-00638-9}.
+
+\bibitem{Jacobides2022} Jacobides, M. G. (2022). How to Compete When Industries Digitize and Collide: An Ecosystem Development Framework. \textit{California Management Review}, 64(3), 99--123. \url{https://doi.org/10.1177/00081256221083352}.
+\end{thebibliography}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% for journal Sci
+%\reviewreports{\\
+%Reviewer 1 comments and authors’ response\\
+%Reviewer 2 comments and authors’ response\\
+%Reviewer 3 comments and authors’ response
+%}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\PublishersNote{}
+\isPreprints{}{% This command is only used for ``preprints''.
+\end{adjustwidth}
+} % If the paper is ``preprints'', please uncomment this parenthesis.
+\end{document}
+
