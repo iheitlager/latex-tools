@@ -641,5 +641,269 @@ class BibtItemParsing(unittest.TestCase):
         self.assertIn('[Warner and Waeger(2019)]', result)
 
 
+class TestDuplicateDetectionAndCaptions(unittest.TestCase):
+    """Tests for duplicate label detection and caption extraction"""
+    
+    def setUp(self):
+        """Set up test environment with temporary directory"""
+        self.test_dir = Path(tempfile.mkdtemp())
+    
+    def tearDown(self):
+        """Clean up test environment"""
+        if self.test_dir.exists():
+            shutil.rmtree(self.test_dir)
+    
+    def create_test_file(self, filename: str, content: str) -> Path:
+        """Helper to create test files"""
+        file_path = self.test_dir / filename
+        with open(file_path, 'w', encoding='utf-8') as f:
+            f.write(content)
+        return file_path
+
+    def test_duplicate_label_detection(self):
+        """Test detection of duplicate labels"""
+        main_content = r"""
+\documentclass{article}
+\begin{document}
+
+\section{Introduction}\label{sec:intro}
+Some text here.
+
+\begin{figure}
+\caption{First figure}
+\label{fig:test}
+\end{figure}
+
+More text.
+
+\begin{figure}
+\caption{Second figure}
+\label{fig:test}
+\end{figure}
+
+Another section.
+\section{Methods}\label{sec:methods}
+
+\begin{table}
+\caption{A table}
+\label{tab:data}
+\end{table}
+
+\begin{table}
+\caption{Another table}
+\label{tab:data}
+\end{table}
+
+\end{document}
+"""
+        
+        main_file = self.create_test_file("main.tex", main_content)
+        output_file = self.test_dir / "output.tex"
+        processor = LaTeXProcessor(str(main_file), str(output_file))
+        processor.process()
+        
+        # Check for duplicates
+        duplicates = processor.detect_duplicate_labels()
+        
+        self.assertEqual(len(duplicates), 2)  # fig:test and tab:data
+        self.assertIn('fig:test', duplicates)
+        self.assertIn('tab:data', duplicates)
+        self.assertEqual(len(duplicates['fig:test']), 2)
+        self.assertEqual(len(duplicates['tab:data']), 2)
+        
+    def test_no_duplicate_labels(self):
+        """Test when there are no duplicate labels"""
+        main_content = r"""
+\documentclass{article}
+\begin{document}
+
+\section{Introduction}\label{sec:intro}
+
+\begin{figure}
+\caption{A figure}
+\label{fig:one}
+\end{figure}
+
+\begin{figure}
+\caption{Another figure}
+\label{fig:two}
+\end{figure}
+
+\end{document}
+"""
+        
+        main_file = self.create_test_file("main.tex", main_content)
+        output_file = self.test_dir / "output.tex"
+        processor = LaTeXProcessor(str(main_file), str(output_file))
+        processor.process()
+        
+        duplicates = processor.detect_duplicate_labels()
+        self.assertEqual(len(duplicates), 0)
+        
+    def test_caption_extraction_with_labels(self):
+        """Test extraction of captions and their association with labels"""
+        main_content = r"""
+\documentclass{article}
+\begin{document}
+
+\begin{figure}
+\centering
+\includegraphics{image.pdf}
+\caption{This is a figure caption}
+\label{fig:example}
+\end{figure}
+
+\begin{table}
+\centering
+\begin{tabular}{cc}
+A & B \\
+\end{tabular}
+\caption{This is a table caption}
+\label{tab:results}
+\end{table}
+
+\end{document}
+"""
+        
+        main_file = self.create_test_file("main.tex", main_content)
+        output_file = self.test_dir / "output.tex"
+        processor = LaTeXProcessor(str(main_file), str(output_file))
+        processor.process()
+        
+        # Extract captions
+        captions = processor.extract_captions(processor.processed_content)
+        
+        self.assertIn('fig:example', captions)
+        self.assertIn('tab:results', captions)
+        
+        self.assertEqual(captions['fig:example']['caption'], 'This is a figure caption')
+        self.assertEqual(captions['fig:example']['type'], 'figure')
+        self.assertTrue(captions['fig:example']['has_caption'])
+        
+        self.assertEqual(captions['tab:results']['caption'], 'This is a table caption')
+        self.assertEqual(captions['tab:results']['type'], 'table')
+        self.assertTrue(captions['tab:results']['has_caption'])
+        
+    def test_caption_missing(self):
+        """Test detection of labels without captions"""
+        main_content = r"""
+\documentclass{article}
+\begin{document}
+
+\begin{figure}
+\centering
+\includegraphics{image.pdf}
+\label{fig:no_caption}
+\end{figure}
+
+\begin{figure}
+\centering
+\includegraphics{image2.pdf}
+\caption{This one has a caption}
+\label{fig:with_caption}
+\end{figure}
+
+\end{document}
+"""
+        
+        main_file = self.create_test_file("main.tex", main_content)
+        output_file = self.test_dir / "output.tex"
+        processor = LaTeXProcessor(str(main_file), str(output_file))
+        processor.process()
+        
+        captions = processor.extract_captions(processor.processed_content)
+        
+        # Check the label without caption
+        self.assertIn('fig:no_caption', captions)
+        self.assertFalse(captions['fig:no_caption']['has_caption'])
+        self.assertIsNone(captions['fig:no_caption']['caption'])
+        
+        # Check the label with caption
+        self.assertIn('fig:with_caption', captions)
+        self.assertTrue(captions['fig:with_caption']['has_caption'])
+        self.assertEqual(captions['fig:with_caption']['caption'], 'This one has a caption')
+        
+    def test_caption_with_nested_braces(self):
+        """Test caption extraction with nested braces"""
+        main_content = r"""
+\documentclass{article}
+\begin{document}
+
+\begin{figure}
+\caption{Caption with \textbf{bold text} and $\alpha = \beta$}
+\label{fig:complex}
+\end{figure}
+
+\end{document}
+"""
+        
+        main_file = self.create_test_file("main.tex", main_content)
+        output_file = self.test_dir / "output.tex"
+        processor = LaTeXProcessor(str(main_file), str(output_file))
+        processor.process()
+        
+        captions = processor.extract_captions(processor.processed_content)
+        
+        self.assertIn('fig:complex', captions)
+        # Check that caption contains the formatting commands
+        self.assertIn('textbf', captions['fig:complex']['caption'])
+        self.assertIn('alpha', captions['fig:complex']['caption'])
+
+    def test_bibtex_export_mode(self):
+        """Test bibtex export mode extracts only referenced entries"""
+        main_content = r"""
+\documentclass{article}
+\begin{document}
+
+Some text citing \cite{Smith2020} and \cite{Jones2019}.
+
+\bibliographystyle{plain}
+\bibliography{refs}
+
+\end{document}
+"""
+        
+        bib_content = r"""
+@article{Smith2020,
+    author = {Smith, John},
+    title = {A Paper},
+    journal = {Journal},
+    year = {2020}
+}
+
+@article{Jones2019,
+    author = {Jones, Jane},
+    title = {Another Paper},
+    journal = {Journal},
+    year = {2019}
+}
+
+@article{Brown2021,
+    author = {Brown, Bob},
+    title = {Uncited Paper},
+    journal = {Journal},
+    year = {2021}
+}
+"""
+        
+        main_file = self.create_test_file("main.tex", main_content)
+        self.create_test_file("refs.bib", bib_content)
+        output_file = self.test_dir / "output.bib"
+        
+        processor = LaTeXProcessor(str(main_file), str(output_file), mode='bibtex')
+        processor.process()
+        
+        # Read output
+        with open(output_file, 'r', encoding='utf-8') as f:
+            result = f.read()
+        
+        # Should contain cited entries
+        self.assertIn('Smith2020', result)
+        self.assertIn('Jones2019', result)
+        
+        # Should NOT contain uncited entry
+        self.assertNotIn('Brown2021', result)
+
+
 if __name__ == '__main__':
     unittest.main()

@@ -48,21 +48,46 @@ from typing import Dict, List, Set, Tuple, Any
 
 
 class LaTeXProcessor:
-    def __init__(self, main_file: str, output_file: str = "onefile.tex"):
+    def __init__(self, main_file: str, output_file: str = "onefile.tex", verbose: bool = False, mode: str = "all"):
         self.main_file = Path(main_file)
-        self.output_file = Path(output_file)
         self.base_dir = self.main_file.parent
         self.processed_files: Set[Path] = set()
         self.cited_keys: List[str] = []
         self.bib_file: Path = None
+        self.verbose = verbose
+        self.mode = mode  # 'all' or 'bibtex'
+        
+        # Adjust output file extension based on mode
+        if mode == 'bibtex':
+            # Ensure .bib extension for bibtex mode
+            output_path = Path(output_file)
+            if output_path.suffix != '.bib':
+                # Replace extension or add .bib
+                if output_path.suffix == '.tex':
+                    output_file = str(output_path.with_suffix('.bib'))
+                elif not output_path.suffix:
+                    output_file = str(output_path) + '.bib'
+                else:
+                    output_file = str(output_path.with_suffix('.bib'))
+        
+        self.output_file = Path(output_file)
         
         # Label and reference tracking
         self.labels: Dict[str, Dict[str, Any]] = {}  # label -> {type, context, file, position}
         self.references: List[Dict[str, Any]] = []  # [{ref, type, file, position}]
         self.label_contexts: Dict[str, str] = {}  # label -> surrounding context
+        self.all_label_occurrences: Dict[str, List[Dict[str, Any]]] = {}  # Track ALL occurrences including duplicates
+        self.processed_content: str = ""  # Store processed content for caption extraction
         
     def process(self) -> None:
         """Main processing function"""
+        if self.mode == 'bibtex':
+            self._process_bibtex_only()
+        else:
+            self._process_full()
+    
+    def _process_full(self) -> None:
+        """Process LaTeX file and inline includes/bibliography"""
         print(f"Processing {self.main_file} -> {self.output_file}")
         
         # Pass 1: Process includes/inputs recursively
@@ -74,18 +99,133 @@ class LaTeXProcessor:
         # Pass 3: Process bibliography
         content = self._process_bibliography(content)
         
+        # Store for later use (caption extraction)
+        self.processed_content = content
+        
         # Write output
         with open(self.output_file, 'w', encoding='utf-8') as f:
             f.write(content)
             
         print(f"Successfully created {self.output_file}")
-        print(f"Processed {len(self.processed_files)} files")
-        print(f"Found {len(self.cited_keys)} citations")
-        print(f"Found {len(self.labels)} labels")
-        print(f"Found {len(self.references)} references")
         
-        # Report on labels and references
-        self._report_labels_and_refs()
+        # Print summary or detailed report based on verbose flag
+        if self.verbose:
+            print(f"Processed {len(self.processed_files)} files")
+            print(f"Found {len(self.cited_keys)} citations")
+            print(f"Found {len(self.labels)} labels")
+            print(f"Found {len(self.references)} references")
+            # Report on labels and references
+            self._report_labels_and_refs()
+        else:
+            self._print_summary()
+    
+    def _print_summary(self) -> None:
+        """Print a concise summary with key statistics and warnings"""
+        print(f"\n{'='*60}")
+        print("SUMMARY")
+        print(f"{'='*60}")
+        print(f"Files processed: {len(self.processed_files)}")
+        print(f"Citations: {len(self.cited_keys)}")
+        print(f"Labels: {len(self.labels)}")
+        print(f"References: {len(self.references)}")
+        
+        # Check for issues
+        issues = []
+        
+        # Check for duplicate labels
+        duplicates = self.detect_duplicate_labels()
+        if duplicates:
+            issues.append(f"⚠️  {len(duplicates)} duplicate label(s)")
+        
+        # Check for undefined references
+        undefined_refs = [ref for ref in self.references if ref['ref'] not in self.labels]
+        if undefined_refs:
+            issues.append(f"⚠️  {len(undefined_refs)} undefined reference(s)")
+        
+        # Check for unused labels
+        referenced_labels = set(ref['ref'] for ref in self.references)
+        unused_labels = set(self.labels.keys()) - referenced_labels
+        if unused_labels:
+            issues.append(f"⚠️  {len(unused_labels)} unused label(s)")
+        
+        # Check for missing captions
+        if self.processed_content:
+            captions = self.extract_captions(self.processed_content)
+            missing_captions = [label for label, info in captions.items() if not info['has_caption']]
+            if missing_captions:
+                issues.append(f"⚠️  {len(missing_captions)} label(s) without captions")
+        
+        if issues:
+            print(f"\n{'='*60}")
+            print("WARNINGS")
+            print(f"{'='*60}")
+            for issue in issues:
+                print(issue)
+        else:
+            print(f"\n✅ No issues detected")
+        
+        print(f"{'='*60}")
+        print("Run with --verbose for detailed reports")
+        print(f"{'='*60}\n")
+    
+    def _process_bibtex_only(self) -> None:
+        """Extract only referenced BibTeX entries without processing"""
+        print(f"Extracting referenced BibTeX entries from {self.main_file}")
+        
+        # Read main file to extract citation keys
+        content = self._process_includes(self.main_file)
+        self._extract_citation_keys(content)
+        
+        # Find and read bibliography file
+        bib_match = re.search(r'\\bibliography\s*\{([^}]+)\}', content)
+        if not bib_match:
+            print("No \\bibliography command found")
+            return
+            
+        bib_filename = bib_match.group(1)
+        if not bib_filename.endswith('.bib'):
+            bib_filename += '.bib'
+            
+        self.bib_file = self.base_dir / bib_filename
+        if not self.bib_file.exists():
+            print(f"Error: Bibliography file not found: {self.bib_file}")
+            return
+        
+        # Read original BibTeX file
+        try:
+            with open(self.bib_file, 'r', encoding='utf-8') as f:
+                bib_content = f.read()
+        except UnicodeDecodeError:
+            with open(self.bib_file, 'r', encoding='latin-1') as f:
+                bib_content = f.read()
+        
+        # Extract referenced entries
+        referenced_entries = self._extract_referenced_bibtex_entries(bib_content, self.cited_keys)
+        
+        # Write output
+        with open(self.output_file, 'w', encoding='utf-8') as f:
+            f.write(referenced_entries)
+        
+        print(f"Successfully created {self.output_file}")
+        print(f"Extracted {len(self.cited_keys)} referenced entries")
+    
+    def _extract_referenced_bibtex_entries(self, bib_content: str, keys: List[str]) -> str:
+        """Extract and return original BibTeX entries for specified keys"""
+        entries = []
+        
+        # Pattern to match BibTeX entries
+        entry_pattern = r'@(\w+)\s*\{\s*([^,\s]+)\s*,\s*(.*?)\n\s*\}'
+        
+        for key in keys:
+            for match in re.finditer(entry_pattern, bib_content, re.DOTALL):
+                entry_key = match.group(2)
+                if entry_key == key:
+                    entries.append(match.group(0))
+                    break
+            else:
+                print(f"Warning: Entry '{key}' not found in bibliography")
+        
+        return '\n\n'.join(entries)
     
     def _process_includes(self, file_path: Path, depth: int = 0) -> str:
         """Recursively process \\input and \\include commands"""
@@ -173,13 +313,24 @@ class LaTeXProcessor:
             # Determine label type based on surrounding context
             label_type = self._determine_label_type(content, position)
             
-            # Store label information
-            self.labels[label_name] = {
+            # Track ALL occurrences for duplicate detection
+            if label_name not in self.all_label_occurrences:
+                self.all_label_occurrences[label_name] = []
+            
+            self.all_label_occurrences[label_name].append({
                 'type': label_type,
                 'context': context,
                 'position': position
-            }
-            self.label_contexts[label_name] = context
+            })
+            
+            # Store label information (first occurrence only)
+            if label_name not in self.labels:
+                self.labels[label_name] = {
+                    'type': label_type,
+                    'context': context,
+                    'position': position
+                }
+                self.label_contexts[label_name] = context
     
     def _determine_label_type(self, content: str, position: int) -> str:
         """Determine the type of label based on surrounding context"""
@@ -324,6 +475,15 @@ class LaTeXProcessor:
             print(f"\n  All {len(self.labels)} labels are referenced ✓")
         
         print("="*60 + "\n")
+        
+        # Report duplicate labels
+        print(self.get_duplicate_labels_report())
+        print()
+        
+        # Report caption associations
+        if self.processed_content:
+            print(self.get_caption_report(self.processed_content))
+            print()
     
     def get_label_stats(self) -> Dict[str, Any]:
         """Get statistics about labels and references"""
@@ -355,6 +515,191 @@ class LaTeXProcessor:
             'all_labels': self.labels,
             'all_references': self.references
         }
+    
+    def detect_duplicate_labels(self) -> Dict[str, List[Dict[str, Any]]]:
+        """
+        Detect duplicate label definitions in the document.
+        
+        Returns:
+            Dictionary mapping duplicate label names to list of their occurrences
+            with position and context information. Only includes labels that appear
+            more than once.
+        """
+        duplicates = {}
+        
+        for label_name, occurrences in self.all_label_occurrences.items():
+            if len(occurrences) > 1:
+                duplicates[label_name] = occurrences
+        
+        return duplicates
+    
+    def get_duplicate_labels_report(self) -> str:
+        """
+        Generate a human-readable report of duplicate labels.
+        
+        Returns:
+            Formatted string report
+        """
+        duplicates = self.detect_duplicate_labels()
+        
+        if not duplicates:
+            return "✓ No duplicate labels found."
+        
+        report_lines = []
+        report_lines.append("=" * 60)
+        report_lines.append(f"⚠️  DUPLICATE LABELS DETECTED: {len(duplicates)}")
+        report_lines.append("=" * 60)
+        
+        for label_name in sorted(duplicates.keys()):
+            occurrences = duplicates[label_name]
+            report_lines.append(f"\nLabel '{label_name}' appears {len(occurrences)} times:")
+            
+            for i, occurrence in enumerate(occurrences, 1):
+                report_lines.append(f"  Occurrence {i}:")
+                report_lines.append(f"    Type: {occurrence['type']}")
+                report_lines.append(f"    Position: {occurrence['position']}")
+                # Show a snippet of context
+                context = occurrence['context']
+                if len(context) > 150:
+                    context = context[:147] + "..."
+                report_lines.append(f"    Context: {context}")
+        
+        report_lines.append("=" * 60)
+        return "\n".join(report_lines)
+    
+    def extract_captions(self, content: str) -> Dict[str, Dict[str, Any]]:
+        """
+        Extract captions and associate them with nearby labels.
+        
+        Args:
+            content: LaTeX document content
+            
+        Returns:
+            Dictionary mapping labels to their caption information:
+            {
+                'label_name': {
+                    'caption': 'caption text',
+                    'type': 'figure|table|listing',
+                    'has_caption': True/False,
+                    'position': int
+                }
+            }
+        """
+        caption_data = {}
+        
+        # Pattern to match \caption{...} with nested braces support
+        caption_pattern = r'\\caption(?:\[[^\]]*\])?\s*\{((?:[^{}]|(?:\{[^}]*\}))*)\}'
+        
+        # Find all captions
+        for caption_match in re.finditer(caption_pattern, content):
+            caption_text = caption_match.group(1).strip()
+            caption_pos = caption_match.start()
+            
+            # Look for a label within 500 characters after the caption
+            search_start = caption_pos
+            search_end = min(len(content), caption_pos + 500)
+            search_region = content[search_start:search_end]
+            
+            # Find the environment this caption belongs to
+            # Search backwards to find \begin{figure}, \begin{table}, etc.
+            preceding_text = content[max(0, caption_pos - 500):caption_pos]
+            
+            # Find ALL matches and take the last one (closest to caption)
+            env_matches = list(re.finditer(
+                r'\\begin\{(figure|table|longtable|listing|lstlisting)\*?\}',
+                preceding_text
+            ))
+            
+            if env_matches:
+                env_type = env_matches[-1].group(1)  # Get the LAST match
+            else:
+                env_type = 'unknown'
+                
+            if env_type in ('longtable', 'supertabular'):
+                env_type = 'table'
+            elif env_type in ('lstlisting',):
+                env_type = 'listing'
+            
+            # Find associated label (should be near the caption)
+            label_match = re.search(r'\\label\{([^}]+)\}', search_region)
+            
+            if label_match:
+                label_name = label_match.group(1)
+                caption_data[label_name] = {
+                    'caption': caption_text,
+                    'type': env_type,
+                    'has_caption': True,
+                    'position': caption_pos,
+                    'label_position': search_start + label_match.start()
+                }
+        
+        # Now find labels without captions (in figure/table/listing environments)
+        for label_name, label_info in self.labels.items():
+            if label_name not in caption_data:
+                label_type = label_info['type']
+                if label_type in ('figure', 'table', 'listing'):
+                    # This label doesn't have an associated caption
+                    caption_data[label_name] = {
+                        'caption': None,
+                        'type': label_type,
+                        'has_caption': False,
+                        'position': label_info['position']
+                    }
+        
+        return caption_data
+    
+    def get_caption_report(self, content: str) -> str:
+        """
+        Generate a human-readable report of captions and their labels.
+        
+        Args:
+            content: LaTeX document content
+            
+        Returns:
+            Formatted string report
+        """
+        caption_data = self.extract_captions(content)
+        
+        report_lines = []
+        report_lines.append("=" * 60)
+        report_lines.append("CAPTION AND LABEL ASSOCIATION REPORT")
+        report_lines.append("=" * 60)
+        
+        # Group by type
+        by_type = {}
+        for label, info in caption_data.items():
+            env_type = info['type']
+            if env_type not in by_type:
+                by_type[env_type] = []
+            by_type[env_type].append((label, info))
+        
+        # Report for each type
+        for env_type in sorted(by_type.keys()):
+            items = by_type[env_type]
+            report_lines.append(f"\n{env_type.upper()}S ({len(items)}):")
+            report_lines.append("-" * 60)
+            
+            for label, info in sorted(items, key=lambda x: x[1]['position']):
+                report_lines.append(f"\n  Label: {label}")
+                if info['has_caption']:
+                    caption = info['caption']
+                    # Truncate long captions
+                    if len(caption) > 100:
+                        caption = caption[:97] + "..."
+                    report_lines.append(f"  Caption: {caption}")
+                else:
+                    report_lines.append("  Caption: ⚠️  MISSING CAPTION")
+        
+        # Summary of missing captions
+        missing = [label for label, info in caption_data.items() if not info['has_caption']]
+        if missing:
+            report_lines.append(f"\n{'=' * 60}")
+            report_lines.append(f"⚠️  WARNING: {len(missing)} label(s) without captions:")
+            for label in sorted(missing):
+                report_lines.append(f"  - {label} ({caption_data[label]['type']})")
+        
+        report_lines.append("=" * 60)
+        return "\n".join(report_lines)
     
     def _process_bibliography(self, content: str) -> str:
         """Process bibliography: extract citations and inline bibliography"""
@@ -679,6 +1024,11 @@ def main():
     parser = argparse.ArgumentParser(description='Process LaTeX files by inlining includes and bibliography')
     parser.add_argument('input_file', nargs='?', default='main.tex', help='Main LaTeX file to process (default: main.tex)')
     parser.add_argument('-o', '--output', default='onefile.tex', help='Output file (default: onefile.tex)')
+    parser.add_argument('-v', '--verbose', action='store_true', help='Show detailed reports')
+    parser.add_argument('-m', '--mode', choices=['all', 'bibtex'], default='all',
+                        help='Processing mode: "all" (process includes and bibliography), "bibtex" (extract only referenced BibTeX entries)')
+    parser.add_argument('-b', '--bibtex', action='store_const', const='bibtex', dest='mode',
+                        help='Shortcut for --mode bibtex (extract only referenced BibTeX entries)')
     
     args = parser.parse_args()
     
@@ -687,7 +1037,7 @@ def main():
         sys.exit(1)
     
     try:
-        processor = LaTeXProcessor(args.input_file, args.output)
+        processor = LaTeXProcessor(args.input_file, args.output, verbose=args.verbose, mode=args.mode)
         processor.process()
     except Exception as e:
         print(f"Error: {e}")
