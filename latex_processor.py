@@ -1,9 +1,39 @@
 #!/usr/bin/env python3
 """
 LaTeX File Processor
-Processes LaTeX files by:
-1. Recursively inlining all \\input and \\include commands
-2. Filtering and inlining bibliography entries as \\bibitem commands
+
+Comprehensive LaTeX document processor that handles:
+
+1. File Inclusion
+   - Recursively inlines all \\input and \\include commands
+   - Prevents circular inclusions
+   - Handles relative and absolute paths
+
+2. Bibliography Processing
+   - Extracts citation keys from \\cite, \\citep, \\citet commands
+   - Parses BibTeX (.bib) files
+   - Filters to only cited references
+   - Converts to inline \\bibitem format with APA-style formatting
+   - Maintains citation order
+
+3. Label and Reference Tracking
+   - Detects labels in figures, tables, sections, subsections, equations, listings
+   - Tracks references (\\ref, \\eqref, \\autoref, \\cref, \\Cref)
+   - Validates all references are defined
+   - Identifies unused labels
+   - Provides detailed reporting and programmatic access
+
+4. Reporting
+   - File processing statistics
+   - Citation counts
+   - Label and reference summary by type
+   - Validation warnings for undefined references and unused labels
+
+Usage:
+    Command line: python3 latex_processor.py main.tex -o onefile.tex
+    Programmatic: processor = LaTeXProcessor('main.tex', 'output.tex')
+                  processor.process()
+                  stats = processor.get_label_stats()
 
 Copyright (c) 2025 - Ilja Heitlager
 SPDX-License-Identifier: Apache-2.0
@@ -14,34 +44,34 @@ import os
 import re
 import sys
 from pathlib import Path
-from typing import Dict, List, Set
+from typing import Dict, List, Set, Tuple, Any
 
 
 class LaTeXProcessor:
-    def __init__(self, main_file: str, output_file: str = "onefile.tex", mode: str = "all"):
+    def __init__(self, main_file: str, output_file: str = "onefile.tex"):
         self.main_file = Path(main_file)
         self.output_file = Path(output_file)
         self.base_dir = self.main_file.parent
         self.processed_files: Set[Path] = set()
         self.cited_keys: List[str] = []
         self.bib_file: Path = None
-        self.mode = mode  # 'all', 'onefile', or 'bibtex'
+        
+        # Label and reference tracking
+        self.labels: Dict[str, Dict[str, Any]] = {}  # label -> {type, context, file, position}
+        self.references: List[Dict[str, Any]] = []  # [{ref, type, file, position}]
+        self.label_contexts: Dict[str, str] = {}  # label -> surrounding context
         
     def process(self) -> None:
         """Main processing function"""
-        if self.mode == 'bibtex':
-            self._process_bibtex_only()
-        else:
-            self._process_full()
-    
-    def _process_full(self) -> None:
-        """Process LaTeX file and inline includes/bibliography"""
         print(f"Processing {self.main_file} -> {self.output_file}")
         
         # Pass 1: Process includes/inputs recursively
         content = self._process_includes(self.main_file)
         
-        # Pass 2: Process bibliography
+        # Pass 2: Extract labels and references
+        self._extract_labels_and_refs(content)
+        
+        # Pass 3: Process bibliography
         content = self._process_bibliography(content)
         
         # Write output
@@ -51,65 +81,11 @@ class LaTeXProcessor:
         print(f"Successfully created {self.output_file}")
         print(f"Processed {len(self.processed_files)} files")
         print(f"Found {len(self.cited_keys)} citations")
-    
-    def _process_bibtex_only(self) -> None:
-        """Extract only referenced BibTeX entries without processing"""
-        print(f"Extracting referenced BibTeX entries from {self.main_file}")
+        print(f"Found {len(self.labels)} labels")
+        print(f"Found {len(self.references)} references")
         
-        # Read main file to extract citation keys
-        content = self._process_includes(self.main_file)
-        self._extract_citation_keys(content)
-        
-        # Find and read bibliography file
-        bib_match = re.search(r'\\bibliography\s*\{([^}]+)\}', content)
-        if not bib_match:
-            print("No \\bibliography command found")
-            return
-            
-        bib_filename = bib_match.group(1)
-        if not bib_filename.endswith('.bib'):
-            bib_filename += '.bib'
-            
-        self.bib_file = self.base_dir / bib_filename
-        if not self.bib_file.exists():
-            print(f"Error: Bibliography file not found: {self.bib_file}")
-            return
-        
-        # Read original BibTeX file
-        try:
-            with open(self.bib_file, 'r', encoding='utf-8') as f:
-                bib_content = f.read()
-        except UnicodeDecodeError:
-            with open(self.bib_file, 'r', encoding='latin-1') as f:
-                bib_content = f.read()
-        
-        # Extract referenced entries
-        referenced_entries = self._extract_referenced_entries(bib_content, self.cited_keys)
-        
-        # Write output
-        with open(self.output_file, 'w', encoding='utf-8') as f:
-            f.write(referenced_entries)
-        
-        print(f"Successfully created {self.output_file}")
-        print(f"Extracted {len(self.cited_keys)} referenced entries")
-    
-    def _extract_referenced_entries(self, bib_content: str, keys: List[str]) -> str:
-        """Extract and return original BibTeX entries for specified keys"""
-        entries = []
-        
-        # Pattern to match BibTeX entries
-        entry_pattern = r'@(\w+)\s*\{\s*([^,\s]+)\s*,\s*(.*?)\n\s*\}'
-        
-        for key in keys:
-            for match in re.finditer(entry_pattern, bib_content, re.DOTALL):
-                entry_key = match.group(2)
-                if entry_key == key:
-                    entries.append(match.group(0))
-                    break
-            else:
-                print(f"Warning: Entry '{key}' not found in bibliography")
-        
-        return '\n\n'.join(entries)
+        # Report on labels and references
+        self._report_labels_and_refs()
     
     def _process_includes(self, file_path: Path, depth: int = 0) -> str:
         """Recursively process \\input and \\include commands"""
@@ -141,6 +117,7 @@ class LaTeXProcessor:
         
         # Process \input{file} and \include{file}
         def replace_include(match):
+            command = match.group(1)  # 'input' or 'include'
             filename = match.group(2).strip()
             
             # Add .tex extension if not present
@@ -169,6 +146,215 @@ class LaTeXProcessor:
         content = re.sub(include_pattern, replace_include, content)
         
         return content
+    
+    def _extract_labels_and_refs(self, content: str) -> None:
+        """Extract all labels and references from the content"""
+        # Extract labels with context
+        self._extract_labels(content)
+        
+        # Extract references
+        self._extract_references(content)
+    
+    def _extract_labels(self, content: str) -> None:
+        r"""Extract all \label{} commands and their context"""
+        # Pattern to match \label{labelname}
+        label_pattern = r'\\label\{([^}]+)\}'
+        
+        # Find all labels with their positions
+        for match in re.finditer(label_pattern, content):
+            label_name = match.group(1)
+            position = match.start()
+            
+            # Extract context around the label
+            context_start = max(0, position - 200)
+            context_end = min(len(content), position + 200)
+            context = content[context_start:context_end].strip()
+            
+            # Determine label type based on surrounding context
+            label_type = self._determine_label_type(content, position)
+            
+            # Store label information
+            self.labels[label_name] = {
+                'type': label_type,
+                'context': context,
+                'position': position
+            }
+            self.label_contexts[label_name] = context
+    
+    def _determine_label_type(self, content: str, position: int) -> str:
+        """Determine the type of label based on surrounding context"""
+        # Look backwards from the label position to find the environment or command
+        context_start = max(0, position - 500)
+        preceding_text = content[context_start:position]
+        
+        # Find all environment beginnings and their positions
+        environments = []
+        
+        for match in re.finditer(r'\\begin\{(figure|table|longtable|supertabular|equation|align|gather|multline|listing|lstlisting)\*?\}', preceding_text):
+            env_type = match.group(1)
+            env_pos = match.start()
+            environments.append((env_pos, env_type))
+        
+        # Find section commands
+        for match in re.finditer(r'\\(subsubsection|subsection|section)\{', preceding_text):
+            section_type = match.group(1)
+            section_pos = match.start()
+            environments.append((section_pos, section_type))
+        
+        # Get the closest environment/command
+        if environments:
+            # Sort by position (descending) and take the closest one
+            environments.sort(reverse=True)
+            closest_env = environments[0][1]
+            
+            # Map environment names to label types
+            env_map = {
+                'figure': 'figure',
+                'table': 'table',
+                'longtable': 'table',
+                'supertabular': 'table',
+                'equation': 'equation',
+                'align': 'equation',
+                'gather': 'equation',
+                'multline': 'equation',
+                'listing': 'listing',
+                'lstlisting': 'listing',
+                'section': 'section',
+                'subsection': 'subsection',
+                'subsubsection': 'subsubsection'
+            }
+            
+            if closest_env in env_map:
+                return env_map[closest_env]
+        
+        # Check label prefix as a fallback
+        following_text = content[position:min(len(content), position + 100)]
+        label_match = re.search(r'\\label\{([^}]+)\}', following_text)
+        if label_match:
+            label_name = label_match.group(1)
+            if label_name.startswith('fig:'):
+                return 'figure'
+            elif label_name.startswith('tab:'):
+                return 'table'
+            elif label_name.startswith('sec:'):
+                return 'section'
+            elif label_name.startswith('eq:'):
+                return 'equation'
+            elif label_name.startswith('lst:'):
+                return 'listing'
+        
+        # Default to unknown
+        return 'unknown'
+    
+    def _extract_references(self, content: str) -> None:
+        r"""Extract all \ref{} and \eqref{} commands"""
+        # Pattern to match \ref{}, \eqref{}, \autoref{}, \cref{}, etc.
+        ref_pattern = r'\\(eq)?ref\{([^}]+)\}'
+        
+        for match in re.finditer(ref_pattern, content):
+            ref_type = 'eqref' if match.group(1) else 'ref'
+            ref_name = match.group(2)
+            
+            self.references.append({
+                'ref': ref_name,
+                'type': ref_type,
+                'position': match.start()
+            })
+        
+        # Also match \autoref{} and \cref{} variants
+        autoref_pattern = r'\\(autoref|cref|Cref)\{([^}]+)\}'
+        
+        for match in re.finditer(autoref_pattern, content):
+            ref_type = match.group(1)
+            ref_name = match.group(2)
+            
+            self.references.append({
+                'ref': ref_name,
+                'type': ref_type,
+                'position': match.start()
+            })
+    
+    def _report_labels_and_refs(self) -> None:
+        """Report on labels and references found"""
+        print("\n" + "="*60)
+        print("LABEL AND REFERENCE SUMMARY")
+        print("="*60)
+        
+        # Group labels by type
+        labels_by_type = {}
+        for label, info in self.labels.items():
+            label_type = info['type']
+            if label_type not in labels_by_type:
+                labels_by_type[label_type] = []
+            labels_by_type[label_type].append(label)
+        
+        # Print labels by type
+        print("\nLabels found:")
+        for label_type in sorted(labels_by_type.keys()):
+            labels = labels_by_type[label_type]
+            print(f"  {label_type}: {len(labels)}")
+            for label in sorted(labels):
+                print(f"    - {label}")
+        
+        # Check for undefined references
+        print("\nReference validation:")
+        undefined_refs = []
+        for ref_info in self.references:
+            ref_name = ref_info['ref']
+            if ref_name not in self.labels:
+                undefined_refs.append(ref_info)
+        
+        if undefined_refs:
+            print(f"  WARNING: {len(undefined_refs)} undefined reference(s):")
+            for ref_info in undefined_refs:
+                print(f"    - \\{ref_info['type']}{{{ref_info['ref']}}}")
+        else:
+            print(f"  All {len(self.references)} references are defined ✓")
+        
+        # Check for unused labels
+        referenced_labels = set(ref_info['ref'] for ref_info in self.references)
+        unused_labels = set(self.labels.keys()) - referenced_labels
+        
+        if unused_labels:
+            print(f"\n  WARNING: {len(unused_labels)} unused label(s):")
+            for label in sorted(unused_labels):
+                label_type = self.labels[label]['type']
+                print(f"    - {label} ({label_type})")
+        else:
+            print(f"\n  All {len(self.labels)} labels are referenced ✓")
+        
+        print("="*60 + "\n")
+    
+    def get_label_stats(self) -> Dict[str, Any]:
+        """Get statistics about labels and references"""
+        # Group labels by type
+        labels_by_type = {}
+        for label, info in self.labels.items():
+            label_type = info['type']
+            if label_type not in labels_by_type:
+                labels_by_type[label_type] = []
+            labels_by_type[label_type].append(label)
+        
+        # Find undefined references
+        undefined_refs = []
+        for ref_info in self.references:
+            ref_name = ref_info['ref']
+            if ref_name not in self.labels:
+                undefined_refs.append(ref_info)
+        
+        # Find unused labels
+        referenced_labels = set(ref_info['ref'] for ref_info in self.references)
+        unused_labels = set(self.labels.keys()) - referenced_labels
+        
+        return {
+            'total_labels': len(self.labels),
+            'total_references': len(self.references),
+            'labels_by_type': labels_by_type,
+            'undefined_references': undefined_refs,
+            'unused_labels': list(unused_labels),
+            'all_labels': self.labels,
+            'all_references': self.references
+        }
     
     def _process_bibliography(self, content: str) -> str:
         """Process bibliography: extract citations and inline bibliography"""
@@ -414,6 +600,8 @@ class LaTeXProcessor:
             booktitle = entry.get('booktitle', '')
             pages = entry.get('pages', '')
             
+            if title:
+                result += f"{title}. "            
             if booktitle:
                 result += f"In \\textit{{{booktitle}}}"
                 if pages:
@@ -491,8 +679,6 @@ def main():
     parser = argparse.ArgumentParser(description='Process LaTeX files by inlining includes and bibliography')
     parser.add_argument('input_file', nargs='?', default='main.tex', help='Main LaTeX file to process (default: main.tex)')
     parser.add_argument('-o', '--output', default='onefile.tex', help='Output file (default: onefile.tex)')
-    parser.add_argument('-m', '--mode', choices=['all', 'onefile', 'bibtex'], default='all',
-                        help='Processing mode: "all" (process includes and bibliography), "onefile" (same as all, for compatibility), "bibtex" (extract only referenced BibTeX entries without processing)')
     
     args = parser.parse_args()
     
@@ -501,7 +687,7 @@ def main():
         sys.exit(1)
     
     try:
-        processor = LaTeXProcessor(args.input_file, args.output, mode=args.mode)
+        processor = LaTeXProcessor(args.input_file, args.output)
         processor.process()
     except Exception as e:
         print(f"Error: {e}")

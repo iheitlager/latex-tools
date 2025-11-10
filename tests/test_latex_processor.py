@@ -344,6 +344,191 @@ This cites \cite{Smith2020} and \cite{Jones2019}.
         self.assertIn("Chapter 2 with extension", result)
 
 
+class TestReferenceHandling(unittest.TestCase):
+
+    def setUp(self):
+        """Set up test environment with temporary directory"""
+        self.test_dir = Path(tempfile.mkdtemp())
+        self.processor = None
+    
+    def tearDown(self):
+        """Clean up test environment"""
+        if self.test_dir.exists():
+            shutil.rmtree(self.test_dir)
+
+    def create_test_file(self, filename: str, content: str) -> Path:
+        """Helper to create test files"""
+        file_path = self.test_dir / filename
+        with open(file_path, 'w', encoding='utf-8') as f:
+            f.write(content)
+        return file_path
+    
+    def test_label_extraction_figures(self):
+        r"""Test extraction of labels from figures"""
+        content = r"""
+\documentclass{article}
+\begin{document}
+
+\begin{figure}
+  \includegraphics{image.png}
+  \caption{A nice figure}
+  \label{fig:nice}
+\end{figure}
+
+\begin{figure}
+  \includegraphics{another.png}
+  \caption{Another figure}
+  \label{fig:another}
+\end{figure}
+
+\end{document}
+"""
+        main_file = self.create_test_file("main.tex", content)
+        processor = LaTeXProcessor(str(main_file))
+        processor._extract_labels_and_refs(content)
+        
+        self.assertIn("fig:nice", processor.labels)
+        self.assertIn("fig:another", processor.labels)
+        self.assertEqual(processor.labels["fig:nice"]["type"], "figure")
+        self.assertEqual(processor.labels["fig:another"]["type"], "figure")
+    
+    def test_label_extraction_tables(self):
+        r"""Test extraction of labels from tables"""
+        content = r"""
+\documentclass{article}
+\begin{document}
+
+\begin{table}
+  \begin{tabular}{cc}
+    A & B \\
+    C & D
+  \end{tabular}
+  \caption{Data table}
+  \label{tab:data}
+\end{table}
+
+\end{document}
+"""
+        main_file = self.create_test_file("main.tex", content)
+        processor = LaTeXProcessor(str(main_file))
+        processor._extract_labels_and_refs(content)
+        
+        self.assertIn("tab:data", processor.labels)
+        self.assertEqual(processor.labels["tab:data"]["type"], "table")
+    
+    def test_label_extraction_sections(self):
+        r"""Test extraction of labels from sections"""
+        content = r"""
+\documentclass{article}
+\begin{document}
+
+\section{Introduction}
+\label{sec:intro}
+
+\subsection{Background}
+\label{sec:background}
+
+\subsubsection{History}
+\label{sec:history}
+
+\end{document}
+"""
+        main_file = self.create_test_file("main.tex", content)
+        processor = LaTeXProcessor(str(main_file))
+        processor._extract_labels_and_refs(content)
+        
+        self.assertIn("sec:intro", processor.labels)
+        self.assertIn("sec:background", processor.labels)
+        self.assertIn("sec:history", processor.labels)
+        self.assertEqual(processor.labels["sec:intro"]["type"], "section")
+        self.assertEqual(processor.labels["sec:background"]["type"], "subsection")
+        self.assertEqual(processor.labels["sec:history"]["type"], "subsubsection")
+    
+    def test_reference_extraction(self):
+        r"""Test extraction of references"""
+        content = r"""
+\documentclass{article}
+\begin{document}
+
+See Figure \ref{fig:nice} and Table \ref{tab:data}.
+Also see Section \ref{sec:intro}.
+For equations, use \eqref{eq:einstein}.
+
+\end{document}
+"""
+        main_file = self.create_test_file("main.tex", content)
+        processor = LaTeXProcessor(str(main_file))
+        processor._extract_labels_and_refs(content)
+        
+        self.assertEqual(len(processor.references), 4)
+        
+        ref_names = [ref['ref'] for ref in processor.references]
+        self.assertIn("fig:nice", ref_names)
+        self.assertIn("tab:data", ref_names)
+        self.assertIn("sec:intro", ref_names)
+        self.assertIn("eq:einstein", ref_names)
+    
+    def test_undefined_references(self):
+        r"""Test detection of undefined references"""
+        content = r"""
+\documentclass{article}
+\begin{document}
+
+\section{Test}
+\label{sec:test}
+
+This references \ref{sec:test} which exists.
+This references \ref{sec:missing} which does not exist.
+
+\end{document}
+"""
+        main_file = self.create_test_file("main.tex", content)
+        processor = LaTeXProcessor(str(main_file))
+        processor._extract_labels_and_refs(content)
+        
+        # Check that sec:test is defined
+        self.assertIn("sec:test", processor.labels)
+        
+        # Check that we have 2 references
+        self.assertEqual(len(processor.references), 2)
+        
+        # Check for undefined reference
+        referenced_labels = set(ref['ref'] for ref in processor.references)
+        undefined = referenced_labels - set(processor.labels.keys())
+        self.assertIn("sec:missing", undefined)
+    
+    def test_unused_labels(self):
+        r"""Test detection of unused labels"""
+        content = r"""
+\documentclass{article}
+\begin{document}
+
+\section{Used Section}
+\label{sec:used}
+
+\section{Unused Section}
+\label{sec:unused}
+
+See Section \ref{sec:used}.
+
+\end{document}
+"""
+        main_file = self.create_test_file("main.tex", content)
+        processor = LaTeXProcessor(str(main_file))
+        processor._extract_labels_and_refs(content)
+        
+        # Both labels should be defined
+        self.assertIn("sec:used", processor.labels)
+        self.assertIn("sec:unused", processor.labels)
+        
+        # Check for unused label
+        referenced_labels = set(ref['ref'] for ref in processor.references)
+        unused = set(processor.labels.keys()) - referenced_labels
+        self.assertIn("sec:unused", unused)
+        self.assertNotIn("sec:used", unused)
+
+
+
 class TestBibItemFormatting(unittest.TestCase):
     """Test specific bibliography formatting functionality"""
     
