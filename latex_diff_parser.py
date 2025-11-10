@@ -7,9 +7,8 @@ Blue: added content in second file
 """
 
 import difflib
-import re
 from pathlib import Path
-from typing import List, Tuple
+from typing import List
 
 
 class LatexDiffParser:
@@ -210,64 +209,70 @@ class LatexInlineDiffParser:
         
         line_count = 0
         
+    
         for tag, i1, i2, j1, j2 in matcher.get_opcodes():
-            if tag == 'equal':
-                # Unchanged lines - always output them
-                for line in lines1[i1:i2]:
-                    if line.strip():
-                        output_lines.append(line + "\n")
-                line_count += (i2 - i1)
+            # Unchanged lines - always output them
+            for line in lines1[i1:i2]:
+                if line.strip():
+                    output_lines.append(line + "\n")
+            line_count += (i2 - i1)
+            # if tag == 'equal':
+            #     # Unchanged lines - always output them
+            #     for line in lines1[i1:i2]:
+            #         if line.strip():
+            #             output_lines.append(line + "\n")
+            #     line_count += (i2 - i1)
                         
-            elif tag == 'delete':
-                # Completely removed lines - group entire line in one macro
-                for line in lines1[i1:i2]:
-                    if line.strip():
-                        output_lines.append(f'\\odiff{{{line}}}\n')
-                line_count += (i2 - i1)
+        #     elif tag == 'delete':
+        #         # Completely removed lines - group entire line in one macro
+        #         for line in lines1[i1:i2]:
+        #             if line.strip():
+        #                 output_lines.append(f'\\odiff{{{line}}}\n')
+        #         line_count += (i2 - i1)
                         
-            elif tag == 'insert':
-                # Completely new lines - group entire line in one macro
-                for line in lines2[j1:j2]:
-                    if line.strip():
-                        output_lines.append(f'\\ndiff{{{line}}}\n')
-                line_count += (j2 - j1)
+        #     elif tag == 'insert':
+        #         # Completely new lines - group entire line in one macro
+        #         for line in lines2[j1:j2]:
+        #             if line.strip():
+        #                 output_lines.append(f'\\ndiff{{{line}}}\n')
+        #         line_count += (j2 - j1)
                         
-            elif tag == 'replace':
-                # Lines that changed - ALWAYS try inline diff for single line changes
-                if i2 - i1 == 1 and j2 - j1 == 1:
-                    # Single line to single line - do inline word-level diff
-                    inline_diff = self.compare_words_inline(lines1[i1], lines2[j1])
-                    output_lines.append(inline_diff + "\n")
-                else:
-                    # Multiple lines changed - pair them up and do inline diff where possible
-                    # First process common length
-                    common_len = min(i2 - i1, j2 - j1)
-                    for idx in range(common_len):
-                        if self.lines_are_similar(lines1[i1 + idx], lines2[j1 + idx]):
-                            inline_diff = self.compare_words_inline(lines1[i1 + idx], lines2[j1 + idx])
-                            output_lines.append(inline_diff + "\n")
-                        else:
-                            # Lines too different - show separately with entire line in one macro
-                            line1 = lines1[i1 + idx]
-                            line2 = lines2[j1 + idx]
-                            if line1.strip():
-                                output_lines.append(f'\\odiff{{{line1}}}\n')
-                            if line2.strip():
-                                output_lines.append(f'\\ndiff{{{line2}}}\n')
+        #     elif tag == 'replace':
+        #         # Lines that changed - ALWAYS try inline diff for single line changes
+        #         if i2 - i1 == 1 and j2 - j1 == 1:
+        #             # Single line to single line - do inline word-level diff
+        #             inline_diff = self.compare_words_inline(lines1[i1], lines2[j1])
+        #             output_lines.append(inline_diff + "\n")
+        #         else:
+        #             # Multiple lines changed - pair them up and do inline diff where possible
+        #             # First process common length
+        #             common_len = min(i2 - i1, j2 - j1)
+        #             for idx in range(common_len):
+        #                 if self.lines_are_similar(lines1[i1 + idx], lines2[j1 + idx]):
+        #                     inline_diff = self.compare_words_inline(lines1[i1 + idx], lines2[j1 + idx])
+        #                     output_lines.append(inline_diff + "\n")
+        #                 else:
+        #                     # Lines too different - show separately with entire line in one macro
+        #                     line1 = lines1[i1 + idx]
+        #                     line2 = lines2[j1 + idx]
+        #                     if line1.strip():
+        #                         output_lines.append(f'\\odiff{{{line1}}}\n')
+        #                     if line2.strip():
+        #                         output_lines.append(f'\\ndiff{{{line2}}}\n')
                     
-                    # Handle any extra lines from file 1
-                    for idx in range(common_len, i2 - i1):
-                        line = lines1[i1 + idx]
-                        if line.strip():
-                            output_lines.append(f'\\odiff{{{line}}}\n')
+        #             # Handle any extra lines from file 1
+        #             for idx in range(common_len, i2 - i1):
+        #                 line = lines1[i1 + idx]
+        #                 if line.strip():
+        #                     output_lines.append(f'\\odiff{{{line}}}\n')
                     
-                    # Handle any extra lines from file 2
-                    for idx in range(common_len, j2 - j1):
-                        line = lines2[j1 + idx]
-                        if line.strip():
-                            output_lines.append(f'\\ndiff{{{line}}}\n')
+        #             # Handle any extra lines from file 2
+        #             for idx in range(common_len, j2 - j1):
+        #                 line = lines2[j1 + idx]
+        #                 if line.strip():
+        #                     output_lines.append(f'\\ndiff{{{line}}}\n')
                 
-                line_count += max(i2 - i1, j2 - j1)
+                # line_count += max(i2 - i1, j2 - j1)
         
         # Write output - no closing document tag
         with open(self.output_path, 'w', encoding='utf-8') as f:
