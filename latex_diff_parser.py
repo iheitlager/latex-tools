@@ -29,8 +29,8 @@ def tokenize_latex(text: str) -> List[str]:
         |[\{\}\[\]]                        # Braces and brackets (separate tokens)
         |\w+                               # Words (letters, digits, underscore)
         |[ \t]+                            # Horizontal whitespace (keep together)
+        |%[^\n]*\n                         # Comments (% to end of line)
         |\n                                # Newlines (separate token)
-        |%[^\n]*                           # Comments (% to end of line)
         |[^\w\s\\{}\[\]%]+                 # Punctuation/special chars
         '''
     return re.findall(pattern, text, re.VERBOSE)
@@ -131,18 +131,52 @@ class LatexInlineDiffParser:
         with open(filepath, 'r', encoding='utf-8') as f:
             return f.read()
 
+    
+    def diff_lines(self, old_line: str, new_line: str) -> str:
+        """Generate inline diff for two lines."""
+
+        old_tokens_raw = tokenize_latex(old_line)
+        new_tokens_raw = tokenize_latex(new_line)
+
+        old_tokens_grouped = group_latex_commands(old_tokens_raw)
+        new_tokens_grouped = group_latex_commands(new_tokens_raw)
+    
+    
+        matcher = difflib.SequenceMatcher(None, old_tokens_grouped, new_tokens_grouped)
+        output_tokens = []
+        
+        for tag, i1, i2, j1, j2 in matcher.get_opcodes():
+            old_segment = old_tokens_grouped[i1:i2]
+            new_segment = new_tokens_grouped[j1:j2]
+            
+            if tag == 'equal':
+                output_tokens.extend(old_segment)
+            elif is_specific(old_segment):
+                if tag == 'replace' or tag == 'insert':
+                    output_tokens.extend(new_segment)
+            elif tag == 'delete':
+                output_tokens.append('\\odiff{' + ''.join(old_segment) + '}')
+            elif tag == 'replace':
+                if new_segment[0] == " ":
+                    output_tokens.append('\\odiff{' + ''.join(old_segment) + '} \\ndiff{' + ''.join(new_segment[1:]) + '}')
+                else:
+                    output_tokens.append('\\odiff{' + ''.join(old_segment) + '}\\ndiff{' + ''.join(new_segment) + '}')
+            elif tag == 'insert':
+                if new_segment[0] == " ":
+                    output_tokens.append(' \\ndiff{' + ''.join(new_segment[1:]) + '}')
+                else:
+                    output_tokens.append('\\ndiff{' + ''.join(new_segment) + '}')
+        
+        return ''.join(output_tokens)
         
     def create_diff_document(self):
         """Create inline diff document."""
         text_old = self.read_file(self.file1_path)
         text_new = self.read_file(self.file2_path)
         
-        old_tokens_raw = tokenize_latex(text_old)
-        new_tokens_raw = tokenize_latex(text_new)
-
-        old_tokens_grouped = group_latex_commands(old_tokens_raw)
-        new_tokens_grouped = group_latex_commands(new_tokens_raw)
-        
+        old_lines = text_old.splitlines(keepends=False)
+        new_lines = text_new.splitlines(keepends=False)  
+       
         # Start with just the macro definitions - no document wrapper
         output_lines = [
             "% LaTeX Diff Macros - Add these at the top of your document\n",
@@ -156,84 +190,31 @@ class LatexInlineDiffParser:
         
         line_count = 0
 
-    # Now compare with grouped tokens
-    matcher = difflib.SequenceMatcher(None, old_tokens_grouped, new_tokens_grouped)    
-    # Generate output
-    output_tokens = []
-    for tag, i1, i2, j1, j2 in matcher.get_opcodes():
-        old_segment = old_tokens_grouped[i1:i2]
-        new_segment = new_tokens_grouped[j1:j2]
-        
-        if tag == 'equal':
-            output_tokens.extend(old_segment)
-        elif is_specific(old_segment):
-            if tag == 'replace' or tag == 'insert':
-                output_tokens.extend(new_segment)
-        elif tag == 'delete':
-            output_tokens.append('\\old{' + ''.join(old_segment) + '}')
-        elif tag == 'replace':
-            if new_segment[0] == " ":
-                output_tokens.append('\\old{' + ''.join(old_segment) + '} \\new{' + ''.join(new_segment[1:]) + '}')
-            else:
-                output_tokens.append('\\old{' + ''.join(old_segment) + '}\\new{' + ''.join(new_segment) + '}')
-        elif tag == 'insert':
-            if new_segment[0] == " ":
-                output_tokens.append(' \\new{' + ''.join(new_segment[1:]) + '}')
-            else:
-                output_tokens.append('\\new{' + ''.join(new_segment) + '}')
-
-    result = ''.join(output_tokens)
-                            
-        #     elif tag == 'delete':
-        #         # Completely removed lines - group entire line in one macro
-        #         for line in lines1[i1:i2]:
-        #             if line.strip():
-        #                 output_lines.append(f'\\odiff{{{line}}}\n')
-        #         line_count += (i2 - i1)
-                        
-        #     elif tag == 'insert':
-        #         # Completely new lines - group entire line in one macro
-        #         for line in lines2[j1:j2]:
-        #             if line.strip():
-        #                 output_lines.append(f'\\ndiff{{{line}}}\n')
-        #         line_count += (j2 - j1)
-                        
-        #     elif tag == 'replace':
-        #         # Lines that changed - ALWAYS try inline diff for single line changes
-        #         if i2 - i1 == 1 and j2 - j1 == 1:
-        #             # Single line to single line - do inline word-level diff
-        #             inline_diff = self.compare_words_inline(lines1[i1], lines2[j1])
-        #             output_lines.append(inline_diff + "\n")
-        #         else:
-        #             # Multiple lines changed - pair them up and do inline diff where possible
-        #             # First process common length
-        #             common_len = min(i2 - i1, j2 - j1)
-        #             for idx in range(common_len):
-        #                 if self.lines_are_similar(lines1[i1 + idx], lines2[j1 + idx]):
-        #                     inline_diff = self.compare_words_inline(lines1[i1 + idx], lines2[j1 + idx])
-        #                     output_lines.append(inline_diff + "\n")
-        #                 else:
-        #                     # Lines too different - show separately with entire line in one macro
-        #                     line1 = lines1[i1 + idx]
-        #                     line2 = lines2[j1 + idx]
-        #                     if line1.strip():
-        #                         output_lines.append(f'\\odiff{{{line1}}}\n')
-        #                     if line2.strip():
-        #                         output_lines.append(f'\\ndiff{{{line2}}}\n')
-                    
-        #             # Handle any extra lines from file 1
-        #             for idx in range(common_len, i2 - i1):
-        #                 line = lines1[i1 + idx]
-        #                 if line.strip():
-        #                     output_lines.append(f'\\odiff{{{line}}}\n')
-                    
-        #             # Handle any extra lines from file 2
-        #             for idx in range(common_len, j2 - j1):
-        #                 line = lines2[j1 + idx]
-        #                 if line.strip():
-        #                     output_lines.append(f'\\ndiff{{{line}}}\n')
-                
-                # line_count += max(i2 - i1, j2 - j1)
+        # Now compare with grouped tokens
+        matcher = difflib.SequenceMatcher(None, old_lines, new_lines)    
+        # Generate output
+        for tag, i1, i2, j1, j2 in matcher.get_opcodes():
+            old_segment = old_lines[i1:i2]
+            new_segment = new_lines[j1:j2]
+            
+            if tag == 'equal':
+                output_lines.extend([line + '\n' for line in old_segment ])
+                line_count += len(old_segment)
+            elif tag == 'delete':
+                output_lines.append('\\old{' + ''.join([line + '\n' for line in old_segment ]) + '}\n')
+                line_count += len(old_segment)
+            elif tag == 'replace':
+                # Process each line pair for inline diffs
+                max_lines = max(len(old_segment), len(new_segment))
+                for k in range(max_lines):
+                    old_line = old_segment[k] if k < len(old_segment) else ""
+                    new_line = new_segment[k] if k < len(new_segment) else ""
+                    diffed_line = self.diff_lines(old_line, new_line)
+                    output_lines.append(diffed_line + '\n')
+                    line_count += 1
+            elif tag == 'insert':
+                output_lines.append('\\new{' + ''.join([line + '\n' for line in new_segment ]) + '}\n')
+                line_count += len(new_segment)
         
         # Write output - no closing document tag
         with open(self.output_path, 'w', encoding='utf-8') as f:
