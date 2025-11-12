@@ -11,132 +11,112 @@ from pathlib import Path
 from typing import List
 
 
-class LatexDiffParser:
-    """Parser for comparing two LaTeX documents and generating colored diff."""
+def tokenize_latex(text: str) -> List[str]:
+    """Split LaTeX into meaningful tokens.
     
-    def __init__(self, file1_path: str, file2_path: str, output_path: str):
-        self.file1_path = Path(file1_path)
-        self.file2_path = Path(file2_path)
-        self.output_path = Path(output_path)
-        
-    def read_file(self, filepath: Path) -> List[str]:
-        """Read a file and return its lines."""
-        with open(filepath, 'r', encoding='utf-8') as f:
-            return f.readlines()
-    
-    def escape_latex_special_chars(self, text: str) -> str:
-        """Escape special LaTeX characters for safe inclusion in output."""
-        # Don't escape if it's already a command
-        if text.startswith('\\'):
-            return text
-        # Basic escaping for text content
-        replacements = {
-            '\\': r'\textbackslash{}',
-            '{': r'\{',
-            '}': r'\}',
-            '$': r'\$',
-            '&': r'\&',
-            '%': r'\%',
-            '#': r'\#',
-            '_': r'\_',
-            '~': r'\textasciitilde{}',
-            '^': r'\textasciicircum{}',
-        }
-        for old, new in replacements.items():
-            text = text.replace(old, new)
-        return text
-    
-    def wrap_with_color(self, text: str, color: str) -> str:
-        """Wrap text with LaTeX color command."""
-        if not text.strip():
-            return text
-        return f"\\textcolor{{{color}}}{{{text}}}"
-    
-    def generate_diff(self) -> List[str]:
-        """Generate diff between two files."""
-        lines1 = self.read_file(self.file1_path)
-        lines2 = self.read_file(self.file2_path)
-        
-        # Use difflib to compute differences
-        differ = difflib.Differ()
-        diff = list(differ.compare(lines1, lines2))
-        
-        output_lines = []
-        
-        for line in diff:
-            if line.startswith('  '):  # Unchanged line
-                output_lines.append(line[2:])
-            elif line.startswith('- '):  # Removed line (red)
-                content = line[2:].rstrip('\n')
-                if content.strip():  # Only add if not empty
-                    colored_line = self.wrap_with_color(content, 'red')
-                    output_lines.append(colored_line + '\n')
-            elif line.startswith('+ '):  # Added line (blue)
-                content = line[2:].rstrip('\n')
-                if content.strip():  # Only add if not empty
-                    colored_line = self.wrap_with_color(content, 'blue')
-                    output_lines.append(colored_line + '\n')
-            elif line.startswith('? '):  # Hint line (ignore)
-                continue
-                
-        return output_lines
-    
-    def create_diff_document(self):
-        """Create the complete diff LaTeX document."""
-        diff_lines = self.generate_diff()
-        
-        # Create a complete LaTeX document with color package
-        header = [
-            "\\documentclass{article}\n",
-            "\\usepackage[utf8]{inputenc}\n",
-            "\\usepackage{xcolor}\n",
-            "\\usepackage[margin=1in]{geometry}\n",
-            "\\usepackage{listings}\n",
-            "\\lstset{basicstyle=\\ttfamily\\small, breaklines=true}\n",
-            "\n",
-            "\\title{LaTeX Diff: single\\_file.tex vs onefile.tex}\n",
-            "\\author{Diff Parser}\n",
-            "\\date{\\today}\n",
-            "\n",
-            "\\begin{document}\n",
-            "\\maketitle\n",
-            "\n",
-            "\\section*{Color Legend}\n",
-            "\\textcolor{red}{Red text indicates content removed from single\\_file.tex}\n",
-            "\\\\\n",
-            "\\textcolor{blue}{Blue text indicates content added in onefile.tex}\n",
-            "\\\\\n",
-            "Black text indicates unchanged content\n",
-            "\n",
-            "\\section*{Differences}\n",
-            "\\begin{lstlisting}[escapechar=@]\n"
-        ]
-        
-        footer = [
-            "\\end{lstlisting}\n",
-            "\\end{document}\n"
-        ]
-        
-        # Write output
-        with open(self.output_path, 'w', encoding='utf-8') as f:
-            f.writelines(header)
-            
-            # Write diff content with proper escaping for lstlisting
-            for line in diff_lines:
-                # If line contains color commands, escape them for lstlisting
-                if '\\textcolor' in line:
-                    # Use escape character @ to embed LaTeX commands
-                    line = line.replace('\\textcolor', '@\\textcolor')
-                    line = line.replace('}}\n', '}}@\n')
-                    line = line.replace('}}', '}}@')
-                f.write(line)
-            
-            f.writelines(footer)
-        
-        print(f"Diff document created: {self.output_path}")
-        print(f"\nTo compile:")
-        print(f"  pdflatex {self.output_path}")
+    Token types:
+    - LaTeX commands with all arguments: \textbf{...}, \def\cmd{...}
+    - Single braces/brackets: { } [ ]
+    - Words (alphanumeric sequences)
+    - Whitespace (preserved)
+    - Punctuation and special characters
+    """
+    import re
+    # Order matters! Try to match longer patterns first
+    pattern = r'''
+        \\[a-zA-Z]+\*?                    # LaTeX command (e.g., \textbf, \section*)
+        |\\[^a-zA-Z]                       # Single-char commands (e.g., \\, \&, \{)
+        |[\{\}\[\]]                        # Braces and brackets (separate tokens)
+        |\w+                               # Words (letters, digits, underscore)
+        |[ \t]+                            # Horizontal whitespace (keep together)
+        |\n                                # Newlines (separate token)
+        |%[^\n]*                           # Comments (% to end of line)
+        |[^\w\s\\{}\[\]%]+                 # Punctuation/special chars
+        '''
+    return re.findall(pattern, text, re.VERBOSE)
 
+
+def is_specific(segment: List[str]) -> bool:
+    if len(segment) == 0:
+        return False
+    elif segment[0][0] == "%":
+        return True
+    elif segment[0].startswith("\\label"):
+        return True
+    elif segment[0].startswith("\\ref"):
+        return True
+    else:
+        return False
+
+def group_latex_commands(tokens: List[str]) -> List[str]:
+    """
+    Group ONLY formatting LaTeX commands with their arguments into single tokens.
+    E.g., ['\\textbf', '{', 'text', '}'] becomes ['\\textbf{text}']
+    
+    This helps the matcher see '\textbf{asset-intensive industries}' as a unit
+    rather than separate tokens, which causes it to be recognized as a REPLACEMENT
+    of plain text with formatted text.
+    
+    Only groups these formatting commands:
+    - Text formatting: textbf, textit, texttt, textsc, emph, underline, etc.
+    - Font commands: bf, it, tt, sc, rm, sf
+    - Size commands: tiny, small, large, Large, LARGE, huge, Huge
+    """
+    # Commands that should be grouped with their arguments
+    FORMATTING_COMMANDS = {
+        'textbf', 'textit', 'texttt', 'textsc', 'textrm', 'textsf',
+        'emph', 'underline', 'textsl', 'textmd', 'textup',
+        'bf', 'it', 'tt', 'sc', 'rm', 'sf', 'sl', 'md', 'up',
+        'tiny', 'scriptsize', 'footnotesize', 'small', 'normalsize',
+        'large', 'Large', 'LARGE', 'huge', 'Huge',
+        'textcolor', 'color', 'colorbox',
+        'label', 'ref'
+        'cite', 'citep', 'citet'
+    }
+    
+    result = []
+    i = 0
+    
+    while i < len(tokens):
+        token = tokens[i]
+        
+        # Check if this is a formatting command followed by braces
+        if token.startswith('\\') and len(token) > 1:
+            cmd_name = token[1:]  # Remove the backslash
+            
+            # Only group if it's a formatting command
+            if cmd_name in FORMATTING_COMMANDS and i + 1 < len(tokens) and tokens[i + 1] == '{':
+                # Find matching closing brace
+                brace_count = 0
+                group = [token]
+                j = i + 1
+                
+                while j < len(tokens):
+                    group.append(tokens[j])
+                    if tokens[j] == '{':
+                        brace_count += 1
+                    elif tokens[j] == '}':
+                        brace_count -= 1
+                        if brace_count == 0:
+                            # Found complete command with arguments
+                            result.append(''.join(group))
+                            i = j + 1
+                            break
+                    j += 1
+                else:
+                    # No matching brace found, just add the command
+                    result.append(token)
+                    i += 1
+            else:
+                # Not a formatting command, or no braces - add as-is
+                result.append(token)
+                i += 1
+        else:
+            # Not a command, add as-is
+            result.append(token)
+            i += 1
+    
+    return result
 
 class LatexInlineDiffParser:
     """Parser that creates inline diffs showing changes within lines."""
@@ -150,51 +130,18 @@ class LatexInlineDiffParser:
         """Read entire file as string."""
         with open(filepath, 'r', encoding='utf-8') as f:
             return f.read()
-    
-    def compare_words_inline(self, line1: str, line2: str) -> str:
-        """Compare two similar lines word-by-word and create TRUE inline diff with grouped macros."""
-        words1 = line1.split()
-        words2 = line2.split()
+
         
-        matcher = difflib.SequenceMatcher(None, words1, words2)
-        result = []
-        
-        for tag, i1, i2, j1, j2 in matcher.get_opcodes():
-            if tag == 'equal':
-                # Unchanged words - add as-is (no wrapper)
-                result.extend(words1[i1:i2])
-            elif tag == 'delete':
-                # Group all removed words into single \odiff
-                deleted_text = ' '.join(words1[i1:i2])
-                result.append(f'\\odiff{{{deleted_text}}}')
-            elif tag == 'insert':
-                # Group all added words into single \ndiff
-                inserted_text = ' '.join(words2[j1:j2])
-                result.append(f'\\ndiff{{{inserted_text}}}')
-            elif tag == 'replace':
-                # Group old words in one \odiff, new words in one \ndiff
-                deleted_text = ' '.join(words1[i1:i2])
-                inserted_text = ' '.join(words2[j1:j2])
-                result.append(f'\\odiff{{{deleted_text}}}')
-                result.append(f'\\ndiff{{{inserted_text}}}')
-        
-        return ' '.join(result)
-    
-    def lines_are_similar(self, line1: str, line2: str, threshold=0.5) -> bool:
-        """Check if two lines are similar enough to do inline diff."""
-        matcher = difflib.SequenceMatcher(None, line1, line2)
-        return matcher.ratio() > threshold
-    
     def create_diff_document(self):
         """Create inline diff document."""
-        text1 = self.read_file(self.file1_path)
-        text2 = self.read_file(self.file2_path)
+        text_old = self.read_file(self.file1_path)
+        text_new = self.read_file(self.file2_path)
         
-        lines1 = text1.splitlines(keepends=False)
-        lines2 = text2.splitlines(keepends=False)
-        
-        # Use SequenceMatcher for line-level comparison
-        matcher = difflib.SequenceMatcher(None, lines1, lines2)
+        old_tokens_raw = tokenize_latex(text_old)
+        new_tokens_raw = tokenize_latex(text_new)
+
+        old_tokens_grouped = group_latex_commands(old_tokens_raw)
+        new_tokens_grouped = group_latex_commands(new_tokens_raw)
         
         # Start with just the macro definitions - no document wrapper
         output_lines = [
@@ -208,21 +155,35 @@ class LatexInlineDiffParser:
         ]
         
         line_count = 0
+
+    # Now compare with grouped tokens
+    matcher = difflib.SequenceMatcher(None, old_tokens_grouped, new_tokens_grouped)    
+    # Generate output
+    output_tokens = []
+    for tag, i1, i2, j1, j2 in matcher.get_opcodes():
+        old_segment = old_tokens_grouped[i1:i2]
+        new_segment = new_tokens_grouped[j1:j2]
         
-    
-        for tag, i1, i2, j1, j2 in matcher.get_opcodes():
-            # Unchanged lines - always output them
-            for line in lines1[i1:i2]:
-                if line.strip():
-                    output_lines.append(line + "\n")
-            line_count += (i2 - i1)
-            # if tag == 'equal':
-            #     # Unchanged lines - always output them
-            #     for line in lines1[i1:i2]:
-            #         if line.strip():
-            #             output_lines.append(line + "\n")
-            #     line_count += (i2 - i1)
-                        
+        if tag == 'equal':
+            output_tokens.extend(old_segment)
+        elif is_specific(old_segment):
+            if tag == 'replace' or tag == 'insert':
+                output_tokens.extend(new_segment)
+        elif tag == 'delete':
+            output_tokens.append('\\old{' + ''.join(old_segment) + '}')
+        elif tag == 'replace':
+            if new_segment[0] == " ":
+                output_tokens.append('\\old{' + ''.join(old_segment) + '} \\new{' + ''.join(new_segment[1:]) + '}')
+            else:
+                output_tokens.append('\\old{' + ''.join(old_segment) + '}\\new{' + ''.join(new_segment) + '}')
+        elif tag == 'insert':
+            if new_segment[0] == " ":
+                output_tokens.append(' \\new{' + ''.join(new_segment[1:]) + '}')
+            else:
+                output_tokens.append('\\new{' + ''.join(new_segment) + '}')
+
+    result = ''.join(output_tokens)
+                            
         #     elif tag == 'delete':
         #         # Completely removed lines - group entire line in one macro
         #         for line in lines1[i1:i2]:
