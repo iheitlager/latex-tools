@@ -10,11 +10,15 @@ Comprehensive LaTeX document processor that handles:
    - Handles relative and absolute paths
 
 2. Bibliography Processing
+   - Supports two methods:
+     * Traditional: \\bibliography{file.bib} - processes at that position
+     * BibLaTeX: \\addbibresource{file.bib} + \\printbibliography - processes at \\printbibliography location
    - Extracts citation keys from \\cite, \\citep, \\citet commands
    - Parses BibTeX (.bib) files
    - Filters to only cited references
    - Converts to inline \\bibitem format with APA-style formatting
    - Maintains citation order
+   - BibLaTeX method outputs \\reftitle{} command with specified or default title
 
 3. Label and Reference Tracking
    - Detects labels in figures, tables, sections, subsections, equations, listings
@@ -702,7 +706,31 @@ class LaTeXProcessor:
         return "\n".join(report_lines)
     
     def _process_bibliography(self, content: str) -> str:
-        """Process bibliography: extract citations and inline bibliography"""
+        r"""Process bibliography: extract citations and inline bibliography
+        
+        Supports two methods:
+        1. Traditional: \bibliography{file.bib} - inline at that position
+        2. BibLaTeX style: \addbibresource{file.bib} + \printbibliography[title=...] 
+           - find file from \addbibresource, replace \printbibliography with output
+        """
+        # Check which bibliography method is used
+        has_addbibresource = bool(re.search(r'\\addbibresource\s*\{([^}]+)\}', content))
+        has_printbibliography = bool(re.search(r'\\printbibliography', content))
+        has_bibliography = bool(re.search(r'\\bibliography\s*\{([^}]+)\}', content))
+        
+        # Determine which method to use
+        if has_addbibresource and has_printbibliography:
+            print("Using BibLaTeX-style bibliography processing (\\addbibresource + \\printbibliography)")
+            return self._process_bibliography_biblatex(content)
+        elif has_bibliography:
+            print("Using traditional bibliography processing (\\bibliography)")
+            return self._process_bibliography_traditional(content)
+        else:
+            print("No bibliography command found")
+            return content
+    
+    def _process_bibliography_traditional(self, content: str) -> str:
+        """Process traditional \bibliography{file.bib} command"""
         # Find bibliography file
         bib_match = re.search(r'\\bibliography\s*\{([^}]+)\}', content)
         if not bib_match:
@@ -738,6 +766,63 @@ class LaTeXProcessor:
         # Replace \bibliography - escape backslashes for regex replacement
         escaped_replacement = bibliography_replacement.replace('\\', r'\\')
         content = re.sub(r'\\bibliography\s*\{[^}]+\}', escaped_replacement, content)
+        
+        return content
+    
+    def _process_bibliography_biblatex(self, content: str) -> str:
+        r"""Process BibLaTeX-style \addbibresource{} and \printbibliography commands"""
+        # Find bibliography file from \addbibresource
+        bib_match = re.search(r'\\addbibresource\s*\{([^}]+)\}', content)
+        if not bib_match:
+            print("No \\addbibresource command found")
+            return content
+            
+        bib_filename = bib_match.group(1)
+        if not bib_filename.endswith('.bib'):
+            bib_filename += '.bib'
+            
+        self.bib_file = self.base_dir / bib_filename
+        if not self.bib_file.exists():
+            print(f"Warning: Bibliography file not found: {self.bib_file}")
+            return content
+        
+        # Extract all citation keys
+        self._extract_citation_keys(content)
+        
+        # Parse bibliography
+        bib_entries = self._parse_bib_file()
+        
+        # Filter and convert to \bibitem
+        bibitem_content = self._create_bibitem_content(bib_entries)
+        
+        # Find \printbibliography command and extract title if present
+        print_bib_pattern = r'\\printbibliography(?:\[([^\]]+)\])?'
+        print_bib_match = re.search(print_bib_pattern, content)
+        
+        if not print_bib_match:
+            print("No \\printbibliography command found")
+            return content
+        
+        # Extract title from options if present
+        title = "References"  # Default title
+        if print_bib_match.group(1):
+            options = print_bib_match.group(1)
+            title_match = re.search(r'title\s*=\s*([^,\]]+)', options)
+            if title_match:
+                title = title_match.group(1).strip()
+        
+        # Create replacement with \reftitle and \begin{thebibliography}
+        bibliography_replacement = f"""\\reftitle{{{title}}}
+\\begin{{thebibliography}}{{99}}
+{bibitem_content}
+\\end{{thebibliography}}"""
+        
+        # Remove \addbibresource command(s)
+        content = re.sub(r'\\addbibresource\s*\{[^}]+\}\s*', '', content)
+        
+        # Replace \printbibliography with the bibliography content
+        escaped_replacement = bibliography_replacement.replace('\\', r'\\')
+        content = re.sub(print_bib_pattern, escaped_replacement, content)
         
         return content
     

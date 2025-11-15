@@ -905,5 +905,281 @@ Some text citing \cite{Smith2020} and \cite{Jones2019}.
         self.assertNotIn('Brown2021', result)
 
 
+class TestBibLaTeXProcessing(unittest.TestCase):
+    """Test BibLaTeX-style bibliography processing"""
+    
+    def setUp(self):
+        """Set up test environment with temporary directory"""
+        self.test_dir = Path(tempfile.mkdtemp())
+    
+    def tearDown(self):
+        """Clean up test environment"""
+        if self.test_dir.exists():
+            shutil.rmtree(self.test_dir)
+    
+    def create_test_file(self, filename: str, content: str) -> Path:
+        """Helper to create test files"""
+        file_path = self.test_dir / filename
+        with open(file_path, 'w', encoding='utf-8') as f:
+            f.write(content)
+        return file_path
+    
+    def test_biblatex_style_processing(self):
+        """Test BibLaTeX-style bibliography with \\addbibresource and \\printbibliography"""
+        main_content = r"""
+\documentclass{article}
+\usepackage[backend=biber]{biblatex}
+\addbibresource{refs.bib}
+
+\begin{document}
+This cites \cite{Smith2020} and \cite{Jones2019}.
+
+\printbibliography[title=References]
+
+\end{document}
+"""
+        
+        bib_content = r"""
+@article{Smith2020,
+  title={A Great Paper},
+  author={Smith, John},
+  journal={Nature},
+  volume={580},
+  pages={123--125},
+  year={2020}
+}
+
+@book{Jones2019,
+  title={The Book},
+  author={Jones, Jane},
+  publisher={Academic Press},
+  year={2019}
+}
+
+@article{Unused2021,
+  title={Unused Paper},
+  author={Nobody, Someone},
+  journal={Nowhere},
+  year={2021}
+}
+"""
+        
+        main_file = self.create_test_file("main.tex", main_content)
+        self.create_test_file("refs.bib", bib_content)
+        
+        output_file = self.test_dir / "output.tex"
+        processor = LaTeXProcessor(str(main_file), str(output_file))
+        processor.process()
+        
+        with open(output_file, 'r', encoding='utf-8') as f:
+            result = f.read()
+        
+        # Should contain bibliography with \reftitle
+        self.assertIn(r"\reftitle{References}", result)
+        self.assertIn(r"\begin{thebibliography}{99}", result)
+        self.assertIn(r"\bibitem[Smith(2020)]{Smith2020}", result)
+        self.assertIn(r"\bibitem[Jones(2019)]{Jones2019}", result)
+        self.assertIn("Smith, J. (2020)", result)
+        self.assertIn("Nature", result)
+        
+        # Should not contain unused citation
+        self.assertNotIn("Unused2021", result)
+        self.assertNotIn("Nobody", result)
+        
+        # Should not contain original bibliography commands
+        self.assertNotIn(r"\addbibresource{refs.bib}", result)
+        self.assertNotIn(r"\printbibliography", result)
+    
+    def test_biblatex_default_title(self):
+        """Test BibLaTeX-style bibliography without explicit title"""
+        main_content = r"""
+\documentclass{article}
+\usepackage{biblatex}
+\addbibresource{refs.bib}
+
+\begin{document}
+This cites \cite{Author2020}.
+
+\printbibliography
+
+\end{document}
+"""
+        
+        bib_content = r"""
+@article{Author2020,
+  title={Test Article},
+  author={Author, Test},
+  journal={Test Journal},
+  year={2020}
+}
+"""
+        
+        main_file = self.create_test_file("main.tex", main_content)
+        self.create_test_file("refs.bib", bib_content)
+        
+        output_file = self.test_dir / "output.tex"
+        processor = LaTeXProcessor(str(main_file), str(output_file))
+        processor.process()
+        
+        with open(output_file, 'r', encoding='utf-8') as f:
+            result = f.read()
+        
+        # Should use default title "References"
+        self.assertIn(r"\reftitle{References}", result)
+        self.assertIn(r"\begin{thebibliography}{99}", result)
+    
+    def test_biblatex_custom_title(self):
+        """Test BibLaTeX-style bibliography with custom title"""
+        main_content = r"""
+\documentclass{article}
+\usepackage{biblatex}
+\addbibresource{refs.bib}
+
+\begin{document}
+This cites \cite{Author2020}.
+
+\printbibliography[title=Bibliography]
+
+\end{document}
+"""
+        
+        bib_content = r"""
+@article{Author2020,
+  title={Test Article},
+  author={Author, Test},
+  journal={Test Journal},
+  year={2020}
+}
+"""
+        
+        main_file = self.create_test_file("main.tex", main_content)
+        self.create_test_file("refs.bib", bib_content)
+        
+        output_file = self.test_dir / "output.tex"
+        processor = LaTeXProcessor(str(main_file), str(output_file))
+        processor.process()
+        
+        with open(output_file, 'r', encoding='utf-8') as f:
+            result = f.read()
+        
+        # Should use custom title "Bibliography"
+        self.assertIn(r"\reftitle{Bibliography}", result)
+        self.assertIn(r"\begin{thebibliography}{99}", result)
+    
+    def test_traditional_vs_biblatex(self):
+        """Test that traditional and BibLaTeX styles are distinguished correctly"""
+        # Traditional style
+        traditional_content = r"""
+\documentclass{article}
+\begin{document}
+This cites \cite{Smith2020}.
+\bibliography{refs}
+\end{document}
+"""
+        
+        # BibLaTeX style
+        biblatex_content = r"""
+\documentclass{article}
+\addbibresource{refs.bib}
+\begin{document}
+This cites \cite{Smith2020}.
+\printbibliography
+\end{document}
+"""
+        
+        bib_content = r"""
+@article{Smith2020,
+  title={Test},
+  author={Smith, John},
+  journal={Journal},
+  year={2020}
+}
+"""
+        
+        # Test traditional
+        trad_file = self.create_test_file("traditional.tex", traditional_content)
+        self.create_test_file("refs.bib", bib_content)
+        trad_output = self.test_dir / "trad_output.tex"
+        processor = LaTeXProcessor(str(trad_file), str(trad_output))
+        processor.process()
+        
+        with open(trad_output, 'r', encoding='utf-8') as f:
+            trad_result = f.read()
+        
+        # Traditional should NOT have \reftitle
+        self.assertNotIn(r"\reftitle", trad_result)
+        self.assertIn(r"\begin{thebibliography}{99}", trad_result)
+        
+        # Test BibLaTeX
+        biblatex_file = self.create_test_file("biblatex.tex", biblatex_content)
+        biblatex_output = self.test_dir / "biblatex_output.tex"
+        processor = LaTeXProcessor(str(biblatex_file), str(biblatex_output))
+        processor.process()
+        
+        with open(biblatex_output, 'r', encoding='utf-8') as f:
+            biblatex_result = f.read()
+        
+        # BibLaTeX should have \reftitle
+        self.assertIn(r"\reftitle{References}", biblatex_result)
+        self.assertIn(r"\begin{thebibliography}{99}", biblatex_result)
+    
+    def test_biblatex_multiple_citations(self):
+        """Test BibLaTeX with multiple citations in order"""
+        main_content = r"""
+\documentclass{article}
+\addbibresource{refs.bib}
+\begin{document}
+First \cite{Zebra2020}, then \cite{Alpha2019}, and \cite{Beta2021}.
+\printbibliography[title=References]
+\end{document}
+"""
+        
+        bib_content = r"""
+@article{Zebra2020,
+  title={Zebra Paper},
+  author={Zebra, Z.},
+  journal={Journal Z},
+  year={2020}
+}
+
+@article{Alpha2019,
+  title={Alpha Paper},
+  author={Alpha, A.},
+  journal={Journal A},
+  year={2019}
+}
+
+@article{Beta2021,
+  title={Beta Paper},
+  author={Beta, B.},
+  journal={Journal B},
+  year={2021}
+}
+"""
+        
+        main_file = self.create_test_file("main.tex", main_content)
+        self.create_test_file("refs.bib", bib_content)
+        
+        output_file = self.test_dir / "output.tex"
+        processor = LaTeXProcessor(str(main_file), str(output_file))
+        processor.process()
+        
+        with open(output_file, 'r', encoding='utf-8') as f:
+            result = f.read()
+        
+        # All citations should be present
+        self.assertIn("Zebra2020", result)
+        self.assertIn("Alpha2019", result)
+        self.assertIn("Beta2021", result)
+        
+        # Should be in citation order (not alphabetical)
+        zebra_pos = result.find("Zebra2020")
+        alpha_pos = result.find("Alpha2019")
+        beta_pos = result.find("Beta2021")
+        
+        self.assertLess(zebra_pos, alpha_pos)
+        self.assertLess(alpha_pos, beta_pos)
+
+
 if __name__ == '__main__':
     unittest.main()

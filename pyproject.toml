@@ -4,6 +4,8 @@ version = "0.1.0"
 description = "Latex command line tools"
 readme = "README.md"
 requires-python = ">=3.14"
-dependencies = [
+
+[tool.uv]
+dev-dependencies = [
     "pytest[dev]>=9.0.0",
 ]
