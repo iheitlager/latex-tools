@@ -67,6 +67,8 @@ type-check: ## Run mypy type checks
 clean: ## Remove virtualenv, artifacts, and caches
 	@echo "Cleaning up..."
 	@rm -rf $(VENV)
+	@rm -rf dist
+	@rm -rf build
 	@find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
 	@find . -type d -name .pytest_cache -exec rm -rf {} + 2>/dev/null || true
 	@find . -type d -name .mypy_cache -exec rm -rf {} + 2>/dev/null || true
