@@ -1,6 +1,12 @@
 # latex-tools
 
+![Python Version](https://img.shields.io/badge/python-3.11+-blue.svg)
+[![Build](https://github.com/iheitlager/latex-tools/workflows/Build%20and%20Release%20Package/badge.svg)](https://github.com/iheitlager/latex-tools/actions)
+[![Tests](https://github.com/iheitlager/latex-tools/workflows/Test%20Package/badge.svg)](https://github.com/iheitlager/latex-tools/actions)
+
 A collection of Python tools for processing, validating, and comparing LaTeX documents. These tools help with common LaTeX workflows including file consolidation, bibliography management, DOI validation, and document comparison.
+
+
 
 ## Tools Overview
 
@@ -208,14 +214,26 @@ inline_parser.create_diff_document()
 
 ## Installation
 
-### Quick Install from GitHub
+### Recommended: Install with pipx
+
+```bash
+# Install with pipx (isolated environment, system-wide commands)
+pipx install git+https://github.com/iheitlager/latex-tools.git
+
+# The commands are now available globally
+latex-processor --help
+doi-validator --help
+latex-diff --help
+```
+
+### Alternative: Install with pip
 
 ```bash
 # Install directly from GitHub (latest version)
-pip install git+https://github.com/iheitlager/latex-tools.git
+python3 -m pip install git+https://github.com/iheitlager/latex-tools.git
 
 # Or install from a specific release
-pip install https://github.com/iheitlager/latex-tools/releases/latest/download/latex_tools-0.2.0-py3-none-any.whl
+python3 -m pip install https://github.com/iheitlager/latex-tools/releases/latest/download/latex_tools-0.2.0-py3-none-any.whl
 ```
 
 ### Development Installation
@@ -236,7 +254,7 @@ For more installation options, see [INSTALL.md](INSTALL.md)
 
 ## Requirements
 
-- Python 3.8+
+- Python 3.11+
 - Standard library only (no external dependencies required)
 
 ## License

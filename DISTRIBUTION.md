@@ -104,28 +104,33 @@ git push origin v0.3.0
 
 ## Installation Methods (for end users)
 
-### 1. From Git (always latest)
+### 1. With pipx (Recommended)
 ```bash
-pip install git+https://github.com/iheitlager/latex-tools.git
+pipx install git+https://github.com/iheitlager/latex-tools.git
 ```
 
-### 2. From Specific Version
+### 2. From Git (always latest)
 ```bash
-pip install git+https://github.com/iheitlager/latex-tools.git@v0.2.0
+python3 -m pip install git+https://github.com/iheitlager/latex-tools.git
 ```
 
-### 3. From Release Wheel (fastest)
+### 3. From Specific Version
 ```bash
-pip install https://github.com/iheitlager/latex-tools/releases/latest/download/latex_tools-0.2.0-py3-none-any.whl
+python3 -m pip install git+https://github.com/iheitlager/latex-tools.git@v0.2.0
 ```
 
-### 4. In requirements.txt
+### 4. From Release Wheel (fastest)
+```bash
+python3 -m pip install https://github.com/iheitlager/latex-tools/releases/latest/download/latex_tools-0.2.0-py3-none-any.whl
+```
+
+### 5. In requirements.txt
 ```txt
 # requirements.txt
 latex-tools @ git+https://github.com/iheitlager/latex-tools.git@v0.2.0
 ```
 
-### 5. For Development
+### 6. For Development
 ```bash
 git clone https://github.com/iheitlager/latex-tools.git
 cd latex-tools
@@ -175,23 +180,27 @@ latex-processor --help
 ### Public Repository
 Simply share the installation command:
 ```bash
-pip install git+https://github.com/iheitlager/latex-tools.git
+# With pipx (recommended)
+pipx install git+https://github.com/iheitlager/latex-tools.git
+
+# Or with pip
+python3 -m pip install git+https://github.com/iheitlager/latex-tools.git
 ```
 
 ### Private Repository
 Users need authentication:
 ```bash
 # Using GitHub token
-pip install git+https://TOKEN@github.com/iheitlager/latex-tools.git
+python3 -m pip install git+https://TOKEN@github.com/iheitlager/latex-tools.git
 
 # Using SSH (if SSH keys configured)
-pip install git+ssh://git@github.com/iheitlager/latex-tools.git
+python3 -m pip install git+ssh://git@github.com/iheitlager/latex-tools.git
 ```
 
 ### Offline/Internal Distribution
 1. Download `.whl` from GitHub Releases
 2. Share file via internal network/email
-3. Users install: `pip install latex_tools-0.2.0-py3-none-any.whl`
+3. Users install: `python3 -m pip install latex_tools-0.2.0-py3-none-any.whl`
 
 ---
 
