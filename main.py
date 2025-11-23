@@ -5,6 +5,7 @@ Main entry point for latex-tools CLI.
 
 from latex_processor import main as latex_main
 
+
 def main():
     latex_main()
 

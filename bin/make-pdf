@@ -1,0 +1,404 @@
+#!/bin/bash
+# A LaTeX PDF compilation wrapper that handles pdflatex, bibliography generation,
+# and cleanup with support for multiple compilation passes and error reporting
+
+# Copyright (c) 2025 - Ilja Heitlager
+# SPDX-License-Identifier: Apache-2.0
+
+#==============================================================================
+# CONSTANTS AND DEFAULT SETTINGS
+#==============================================================================
+
+APP_NAME=$(basename "$0")
+
+# Default settings
+CLEANUP=false
+VERBOSE=false
+OUTDIR=""
+BIBENGINE="biber"
+PASSES=3
+OPEN_PDF=false
+SHOW_LOG=false
+KEEP_LOG=false
+FILENAME=""
+
+#==============================================================================
+# HELPER FUNCTIONS
+#==============================================================================
+
+show_usage() {
+    local HELP="cat"
+    if command -v bat >/dev/null 2>&1; then
+        HELP="bat --plain --language=help"
+    fi
+    
+    $HELP << EOF
+Usage: $APP_NAME [OPTIONS] <filename.tex>
+
+OPTIONS:
+    -c, --clean         Clean auxiliary files after compilation
+    -v, --verbose       Show stderr output (for debugging)
+    -o, --outdir DIR    Output directory for PDF and aux files
+    -b, --bibtex        Use bibtex instead of biber
+    -p, --passes N      Number of pdflatex passes (default: 3)
+    -x, --open          Open PDF after successful compilation
+    -l, --showlog       Show last 20 lines of .log file on error
+    --keeplog           Don't delete .log files during cleanup
+    -h, --help          Show this help message
+
+Example:
+    $APP_NAME paper.tex                    # Basic compilation
+    $APP_NAME -c -x paper.tex             # Compile with cleanup and auto-open PDF
+    $APP_NAME -o build -l paper.tex       # Output to build/ directory with error details
+    $APP_NAME -b -p 2 paper.tex           # Use bibtex with 2 passes
+
+EOF
+}
+
+check_command() {
+    if ! command -v "$1" >/dev/null 2>&1; then
+        echo "❌ Error: $1 not found"
+        echo ""
+        echo "To install LaTeX on macOS:"
+        echo "  brew install --cask mactex              # Full MacTeX (4GB)"
+        echo "  brew install mactex-no-gui              # Command-line only"
+        echo ""
+        echo "To install on Linux:"
+        echo "  sudo apt install texlive-full           # Ubuntu/Debian"
+        echo "  sudo dnf install texlive-scheme-full    # Fedora"
+        echo ""
+        exit 1
+    fi
+}
+
+run_command() {
+    if [ "$VERBOSE" = true ]; then
+        "$@"
+    else
+        "$@" >/dev/null 2>&1
+    fi
+}
+
+show_latex_errors() {
+    local logfile="$1"
+    
+    if [ ! -f "$logfile" ]; then
+        echo "❌ No log file found at: $logfile"
+        return
+    fi
+    
+    echo ""
+    echo "📋 LaTeX Error Details:"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    
+    # Extract error lines and surrounding context
+    if grep -q "^!" "$logfile"; then
+        echo "🔍 Errors found in log:"
+        grep -A 3 -B 1 "^!" "$logfile" | head -20
+    else
+        echo "⚠️  No explicit errors found. Last 20 lines of log:"
+        tail -20 "$logfile"
+    fi
+    
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "💡 Full log file: $logfile"
+}
+
+run_bibliography() {
+    local bibfile="$1"
+    local bibdb=""
+    
+    echo "🔄 Running $BIBENGINE for bibliography..."
+    
+    # Capture output to parse for info and warnings
+    local output
+    output=$("$BIBENGINE" "$bibfile" 2>&1)
+    local exit_code=$?
+    
+    # Show output if verbose mode
+    if [ "$VERBOSE" = true ]; then
+        echo "$output"
+    fi
+    
+    # Extract bibliography database file
+    if echo "$output" | grep -q "INFO - Found BibTeX data source"; then
+        bibdb=$(echo "$output" | grep "INFO - Found BibTeX data source" | sed "s/.*'\(.*\)'.*/\1/")
+        echo "📚 Bibliography database: $bibdb"
+    fi
+    
+    # Check for missing reference warnings
+    local warnings_found=false
+    while IFS= read -r line; do
+        if echo "$line" | grep -q "WARN - I didn't find a database entry for"; then
+            local missing_ref=$(echo "$line" | sed "s/.*'\(.*\)'.*/\1/" | cut -d"'" -f1)
+            echo "⚠️  Reference '$missing_ref' not found in '$bibdb'"
+            warnings_found=true
+        fi
+    done <<< "$output"
+    
+    # Fail if warnings were found
+    if [ "$warnings_found" = true ]; then
+        echo "❌ $BIBENGINE failed: missing references"
+        exit 1
+    fi
+    
+    if [ $exit_code -eq 0 ]; then
+        echo "✅ $BIBENGINE completed"
+        return 0
+    else
+        echo "❌ $BIBENGINE failed"
+        return 1
+    fi
+}
+
+open_pdf() {
+    local pdffile="$1"
+    
+    if [ ! -f "$pdffile" ]; then
+        echo "⚠️  Warning: PDF file not found"
+        return 1
+    fi
+    
+    echo "📁 PDF file size: $(du -h "$pdffile" | cut -f1)"
+    
+    if [ "$OPEN_PDF" = true ]; then
+        echo "🚀 Opening PDF..."
+        if command -v open >/dev/null 2>&1; then
+            # macOS
+            open "$pdffile"
+        elif command -v xdg-open >/dev/null 2>&1; then
+            # Linux
+            xdg-open "$pdffile" >/dev/null 2>&1 &
+        elif command -v evince >/dev/null 2>&1; then
+            # Linux fallback
+            evince "$pdffile" >/dev/null 2>&1 &
+        else
+            echo "⚠️  Could not detect PDF viewer to open file"
+        fi
+    fi
+}
+
+cleanup_files() {
+    local basename="$1"
+    
+    if [ "$CLEANUP" = false ]; then
+        return 0
+    fi
+    
+    echo "🧹 Cleaning up auxiliary files..."
+    
+    # Define cleanup files
+    if [ "$KEEP_LOG" = true ]; then
+        # Keep log files
+        cleanup_extensions="aux,bbl,blg,out,toc,lof,lot,fls,fdb_latexmk,synctex.gz"
+    else
+        # Remove log files too
+        cleanup_extensions="aux,bbl,blg,log,out,toc,lof,lot,fls,fdb_latexmk,synctex.gz"
+    fi
+    
+    if [ -n "$OUTDIR" ]; then
+        # Clean files in output directory
+        eval "rm -f \"$OUTDIR/$basename\".{$cleanup_extensions}"
+    else
+        # Clean files in current directory
+        eval "rm -f \"$basename\".{$cleanup_extensions}"
+    fi
+    
+    if [ "$KEEP_LOG" = true ]; then
+        echo "✅ Cleanup completed (log files preserved)"
+    else
+        echo "✅ Cleanup completed"
+    fi
+}
+
+#==============================================================================
+# VALIDATION FUNCTIONS
+#==============================================================================
+
+validate_input() {
+    # Check if filename is provided
+    if [ -z "$FILENAME" ]; then
+        echo "Error: No filename provided"
+        show_usage
+        exit 1
+    fi
+    
+    # Check if file exists
+    if [ ! -f "$FILENAME" ]; then
+        echo "❌ Error: File '$FILENAME' not found"
+        exit 1
+    fi
+}
+
+check_dependencies() {
+    check_command "pdflatex"
+    check_command "$BIBENGINE"
+}
+
+#==============================================================================
+# COMPILATION FUNCTIONS
+#==============================================================================
+
+run_pdflatex_pass() {
+    local pass_num="$1"
+    local outdir_arg="$2"
+    
+    # Generate ordinal suffix
+    local suffix
+    case $pass_num in
+        1) suffix="st" ;;
+        2) suffix="nd" ;;
+        3) suffix="rd" ;;
+        *) suffix="th" ;;
+    esac
+    
+    echo "🔄 Running pdflatex (${pass_num}${suffix} pass)..."
+    if run_command pdflatex $outdir_arg "$FILENAME"; then
+        if [ $pass_num -eq 1 ]; then
+            echo "✅ First pdflatex pass completed"
+        else
+            echo "✅ Pass $pass_num completed"
+        fi
+        return 0
+    else
+        echo "❌ Pass $pass_num failed"
+        
+        if [ "$SHOW_LOG" = true ]; then
+            local basename="${FILENAME%.tex}"
+            if [ -n "$OUTDIR" ]; then
+                show_latex_errors "$OUTDIR/$basename.log"
+            else
+                show_latex_errors "$basename.log"
+            fi
+        fi
+        exit 1
+    fi
+}
+
+compile_latex() {
+    local basename="${FILENAME%.tex}"
+    local outdir_arg=""
+    
+    # Create output directory if specified
+    if [ -n "$OUTDIR" ]; then
+        mkdir -p "$OUTDIR"
+        outdir_arg="-output-directory=$OUTDIR"
+    fi
+    
+    echo "📄 Compiling LaTeX document: $FILENAME"
+    if [ -n "$OUTDIR" ]; then
+        echo "📁 Output directory: $OUTDIR"
+    fi
+    echo "🔧 Bibliography engine: $BIBENGINE"
+    echo "🔄 Number of passes: $PASSES"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    
+    # First pdflatex run
+    run_pdflatex_pass 1 "$outdir_arg"
+    
+    # Run bibliography engine
+    local bibfile
+    if [ -n "$OUTDIR" ]; then
+        bibfile="$OUTDIR/$basename"
+    else
+        bibfile="$basename"
+    fi
+    
+    if ! run_bibliography "$bibfile"; then
+        exit 1
+    fi
+    
+    # Additional pdflatex runs
+    for ((i=2; i<=PASSES; i++)); do
+        run_pdflatex_pass $i "$outdir_arg"
+    done
+    
+    # Determine PDF location
+    local pdffile
+    if [ -n "$OUTDIR" ]; then
+        pdffile="$OUTDIR/$basename.pdf"
+    else
+        pdffile="$basename.pdf"
+    fi
+    
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "🎉 Compilation complete! Output: $pdffile"
+    
+    # Open PDF and cleanup
+    open_pdf "$pdffile"
+    cleanup_files "$basename"
+    
+    echo "🏁 Done!"
+}
+
+#==============================================================================
+# MAIN FUNCTION
+#==============================================================================
+
+main() {
+    validate_input
+    check_dependencies
+    compile_latex
+}
+
+#==============================================================================
+# COMMAND LINE ARGUMENT PARSING
+#==============================================================================
+
+# Parse command line arguments
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        -c|--clean)
+            CLEANUP=true
+            shift
+            ;;
+        -v|--verbose)
+            VERBOSE=true
+            shift
+            ;;
+        -o|--outdir)
+            OUTDIR="$2"
+            shift 2
+            ;;
+        -b|--bibtex)
+            BIBENGINE="bibtex"
+            shift
+            ;;
+        -p|--passes)
+            PASSES="$2"
+            shift 2
+            ;;
+        -x|--open)
+            OPEN_PDF=true
+            shift
+            ;;
+        -l|--showlog)
+            SHOW_LOG=true
+            shift
+            ;;
+        --keeplog)
+            KEEP_LOG=true
+            shift
+            ;;
+        -h|--help)
+            show_usage
+            exit 0
+            ;;
+        -*)
+            echo "Unknown option: $1"
+            show_usage
+            exit 1
+            ;;
+        *)
+            FILENAME="$1"
+            shift
+            ;;
+    esac
+done
+
+#==============================================================================
+# SCRIPT EXECUTION
+#==============================================================================
+
+# Run the main function
+main "$@"

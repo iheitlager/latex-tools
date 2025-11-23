@@ -1,11 +1,39 @@
 [project]
 name = "latex-tools"
-version = "0.1.0"
+dynamic = ["version"]
 description = "Latex command line tools"
 readme = "README.md"
 requires-python = ">=3.14"
 
 [tool.uv]
-dev-dependencies = [
+
+
+[dependency-groups]
+dev = [
     "pytest[dev]>=9.0.0",
+    "pytest-cov>=4.1.0",
+    "ruff>=0.1.9",
+    "mypy>=1.8.0",    
+]
+
+[project.scripts]
+latex-processor = "latex_tools.cli.latex_processor:main"
+doi-validator = "latex_tools.cli.doi_validator:main"
+lated-diff = "latex_tools.cli.latex_diff_parser:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.version]
+path = "src/latex_tools/__init__.py"
+
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+filterwarnings = [
+    "ignore::DeprecationWarning",
 ]
