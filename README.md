@@ -208,18 +208,31 @@ inline_parser.create_diff_document()
 
 ## Installation
 
+### Quick Install from GitHub
+
+```bash
+# Install directly from GitHub (latest version)
+pip install git+https://github.com/iheitlager/latex-tools.git
+
+# Or install from a specific release
+pip install https://github.com/iheitlager/latex-tools/releases/latest/download/latex_tools-0.2.0-py3-none-any.whl
+```
+
+### Development Installation
+
 ```bash
 # Clone the repository
 git clone https://github.com/iheitlager/latex-tools.git
 cd latex-tools
 
-# Create virtual environment (recommended)
-python -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+# Install in editable mode with dev dependencies
+pip install -e ".[dev]"
 
-# Install dependencies (if any)
-pip install -r requirements.txt  # if requirements file exists
+# Or using uv (recommended)
+uv sync
 ```
+
+For more installation options, see [INSTALL.md](INSTALL.md)
 
 ## Requirements
 
