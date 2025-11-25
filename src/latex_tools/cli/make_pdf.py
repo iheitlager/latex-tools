@@ -104,9 +104,9 @@ def cleanup_files(basename: str, outdir: str, keeplog: bool):
 
 
 def main():
-
     parser = argparse.ArgumentParser(
-        description="Compile LaTeX to PDF with bibliography and cleanup."
+        description="Compile LaTeX to PDF with bibliography and cleanup.",
+        usage="make-pdf [--version] [-crvbxl] [-o DIR] [-p N] [--keeplog] filename ...",
     )
     parser.add_argument("filename", nargs="?", help="LaTeX source file (.tex)")
     parser.add_argument(
@@ -159,11 +159,14 @@ def main():
     args = parser.parse_args()
 
     if args.version:
-        # Try to get version from package metadata
         print(f"latex-tools version: {__version__}")
         sys.exit(0)
 
     filename = args.filename
+    if not filename:
+        parser.print_usage()
+        sys.exit(2)
+
     basename = Path(filename).stem
     outdir = args.outdir
     bibengine = "bibtex" if args.bibtex else "biber"
@@ -172,7 +175,7 @@ def main():
     keeplog = args.keeplog
 
     if not Path(filename).is_file():
-        print(f"❌ Error: File '{filename}' not found")
+        print(f"Error: File '{filename}' not found")
         sys.exit(1)
     check_command("pdflatex")
     check_command(bibengine)
