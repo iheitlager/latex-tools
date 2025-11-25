@@ -4,8 +4,7 @@
 VENV := .venv
 PYTHON_VERSION := 3.14
 
-.PHONY: env install install-dev test help clean run lint format type-check check
-.PHONY: sbom audit sbom-check
+.PHONY: version check env sync lock test test-py lint format type-check clean help
 
 version: ## Show project version
 	@uv run python -c "import latex_tools; print(f'latex-tools version: {latex_tools.__version__}')"

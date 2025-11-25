@@ -20,6 +20,7 @@ dev = [
 latex-processor = "latex_tools.cli.latex_processor:main"
 doi-validator = "latex_tools.cli.doi_validator:main"
 lated-diff = "latex_tools.cli.latex_diff_parser:main"
+make-pdf = "latex_tools.cli.make_pdf:main"
 
 [build-system]
 requires = ["hatchling"]
