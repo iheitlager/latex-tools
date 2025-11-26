@@ -6,7 +6,7 @@ readme = "README.md"
 requires-python = ">=3.11"
 
 [tool.uv]
-
+package = true
 
 [dependency-groups]
 dev = [
@@ -37,4 +37,19 @@ python_classes = ["Test*"]
 python_functions = ["test_*"]
 filterwarnings = [
     "ignore::DeprecationWarning",
+]
+
+
+# Ruff linter configuration
+# Select rules: E (errors), F (pyflakes), W (warnings), C90 (complexity), B (flake8-bugbear), I (isort)
+[tool.ruff]
+line-length = 120
+select = ["E", "F", "W", "C90", "B", "B9", "I"]
+exclude = ["__init__.py"]
+ignore = [
+    "D",    # docstring
+    "E203", # whitespace
+    "E501", # line length
+    "W503", # operator
+    "B950", # line length
 ]
